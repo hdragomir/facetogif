@@ -1,0 +1,96 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset=utf-8>
+    <title>facey</title>
+    <style>
+      canvas, video {
+        width: 640px;
+        height: 480px;
+        background: rgba(0,255,0, 0.1);
+      }
+
+      canvas, button, video, img {
+        display: block;
+        margin: 0 auto;
+      }
+      video + button {
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      video[src] + button {
+        opacity: 1;
+      }
+
+      canvas {
+        /*display: none;*/
+      }
+
+    </style>
+  </head>
+  <body>
+  <video autoplay height=480 width=640 ></video>
+  <button id=start-recording>start</button>
+  <canvas height=480 width=640></canvas>
+  <script>
+  (function () {
+    var video, cameraStream, button, canvas, frames = [], ctx, interval,
+      worker = new Worker('worker.js');
+    worker.onmessage = function (evt) {
+        var msg = evt.data;
+        var imgElem = document.createElement("img");
+        var base64Str = btoa(msg.gifDataStr);
+        imgElem.src = "data:image/gif;base64," + base64Str;
+        document.body.appendChild(imgElem);
+    };
+    worker.onerror = function (err) {
+        alert(err);
+    };
+
+    document.addEventListener('DOMContentLoaded', function (e) {
+      video = document.querySelector('video');
+      canvas = document.querySelector('canvas');
+      video.addEventListener('click', function (e) {
+        if (cameraStream) {
+          cameraStream.stop();
+          cameraStream = null;
+          video.removeAttribute('src');
+        } else {
+          navigator.webkitGetUserMedia({video: true}, function (stream) {
+            video.src = window.URL.createObjectURL(stream);
+            cameraStream = stream;
+          }, function (fail) { console.log(fail); });
+        }
+      }, false);
+      button = document.getElementById('start-recording');
+      button.addEventListener('click', function (e) {
+        button.classList.toggle('recording');
+        if (ctx) {
+          button.innerText = "start";
+          clearInterval(interval);
+          //return ctx = null;
+          worker.postMessage({
+              imageDataList: frames,
+              width: 640,
+              height: 480,
+              paletteSize: 255,
+              delayTimeInMS: 67,
+          });
+          frames = [];
+          ctx = null;
+
+        } else {
+          button.innerText = "stop";
+          ctx = canvas.getContext('2d');
+          interval = setInterval(function () {
+            ctx.drawImage(video, 0,0, 640, 480);
+            frames.push(ctx.getImageData(0,0, 640,480));
+          }, 67);
+        }
+      }, false);
+    }, false);
+  }());
+
+  </script>
+  </body>
+</html>
