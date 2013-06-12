@@ -105,12 +105,13 @@
       <button class="ui-button request-stream" id=put-your-face-here>put your face here</button>
       <video autoplay height=480 width=640 ></video>
       <button class="ui-button recording-toggle" id=start-recording>start recording</button>
-      <canvas height=240 width=320 ></canvas>
+      <canvas height=480 width=640 ></canvas>
       <output id=gifs-go-here></output>
     </div>
     <div id="controls-template" class="controls">
-      <a class="ui-button download img">download gif</a>
+      <a class="ui-button download img" download=your-giffed-face.gif>download gif</a>
     </div>
+  <script src=gif.js></script>
   <script src=app.js></script>
   </body>
 </html>
