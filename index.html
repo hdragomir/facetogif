@@ -4,6 +4,10 @@
     <meta charset=utf-8>
     <title>face to gif</title>
     <style>
+
+      body, .ui-button {
+        font-family: "Myriad Pro","Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
+      }
       .container {
         width: 40em;
         margin: 1em auto;
@@ -26,6 +30,7 @@
 
       .ui-button {
         text-decoration: none;
+        border-radius: 0.1em;
         border: 0;
         width: 100%;
         cursor: pointer;
@@ -42,6 +47,7 @@
 
       .ui-button[disabled] {
         cursor: no-drop;
+        opacity: 1;
       }
 
       .ui-button:active {
@@ -99,135 +105,12 @@
       <button class="ui-button request-stream" id=put-your-face-here>put your face here</button>
       <video autoplay height=480 width=640 ></video>
       <button class="ui-button recording-toggle" id=start-recording>start recording</button>
-      <canvas height=480 width=640></canvas>
+      <canvas height=240 width=320 ></canvas>
       <output id=gifs-go-here></output>
     </div>
     <div id="controls-template" class="controls">
       <a class="ui-button download img">download gif</a>
     </div>
-  <script>
-  (function () {
-    var video, cameraStream, button, canvas, frames = [], ctx, interval,
-      worker = new Worker('worker.js');
-
-
-    function thisBrowserIsBad() {
-      console.log('nope');
-    }
-
-    function getStream(callback, fail) {
-      (navigator.getUserMedia || navigator.webkitGetUserMedia || thisBrowserIsBad).call(navigator, {video: true}, callback, fail);
-    }
-
-    var facetogif = {
-      savedFrames: [],
-      stream: null,
-      video: null,
-      gifContainer: null,
-      controls: null,
-      str: {
-        ASK_FOR_PERMISSION: "put your face here",
-        STOP_STREAMING: "stop streaming",
-        START_RECORDING: "start recording",
-        STOP_RECORDING: "make gif",
-        COMPILING: "\"it's compiling...\""
-      },
-
-      displayGIF: function (img) {
-        var article = document.createElement('article');
-        article.appendChild(facetogif.controls.cloneNode(true));
-        article.appendChild(img);
-        article.className = "generated-gif";
-        article.dataset.framesID = img.dataset.framesID;
-        facetogif.gifContainer.appendChild(article);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', function (e) {
-      facetogif.video = document.querySelector('video');
-      facetogif.controls = document.getElementById('controls-template');
-      facetogif.controls.parentNode.removeChild(facetogif.controls);
-      facetogif.controls.removeAttribute('id');
-
-      canvas = document.querySelector('canvas');
-      facetogif.gifContainer = document.getElementById('gifs-go-here');
-      facetogif.gifContainer.addEventListener('click', function (e) {
-        var container = function (e) {
-          while (e.parentNode && !e.classList.contains('generated-gif')) {
-           e = e.parentNode;
-          }
-          return e;
-        } (e.srcElement);
-        if (e.srcElement.classList.contains('img')) {
-          e.srcElement.setAttribute('download', "your-face-giffed.gif");
-          e.srcElement.setAttribute('href', container.querySelector('img').src);
-        }
-      }, false);
-
-      document.getElementById('put-your-face-here').addEventListener('click', function (e) {
-        var button = e.srcElement;
-        if (button.classList.contains('clicked')) {
-          facetogif.stream.stop();
-          facetogif.stream = null;
-          facetogif.video.removeAttribute('src');
-          button.innerText = facetogif.str.ASK_FOR_PERMISSION;
-          button.classList.remove('streaming');
-        } else {
-          getStream(function (stream) {
-            button.innerText = facetogif.str.STOP_STREAMING;
-            button.classList.add('streaming');
-            facetogif.video.src = window.URL.createObjectURL(stream);
-            facetogif.stream = stream;
-          }, function (fail) { console.log(fail); });
-        }
-        button.classList.toggle('clicked');
-      }, false);
-
-      button = document.getElementById('start-recording');
-      button.addEventListener('click', function (e) {
-        button.classList.toggle('recording');
-        if (ctx) {
-          button.innerText = facetogif.str.COMPILING;
-          clearInterval(interval);
-          facetogif.duration = frames.length * 67;
-          facetogif.start = Date.now();
-          worker.postMessage({
-              imageDataList: frames,
-              width: 640,
-              height: 480,
-              paletteSize: 255,
-              delayTimeInMS: 67,
-          });
-          button.disabled = true;
-          ctx = null;
-        } else {
-          button.innerText = facetogif.str.STOP_RECORDING;
-          ctx = canvas.getContext('2d');
-          interval = setInterval(function () {
-            ctx.drawImage(facetogif.video, 0,0, 640,480);
-            frames.push(ctx.getImageData(0,0, 640,480));
-          }, 67);
-        }
-      }, false);
-
-      worker.onmessage = function (evt) {
-          var msg = evt.data;
-          var imgElem = document.createElement("img");
-          var base64Str = btoa(msg.gifDataStr);
-          imgElem.src = "data:image/gif;base64," + base64Str;
-          imgElem.dataset.framesID = facetogif.savedFrames.push(frames) - 1;
-          frames = [];
-          facetogif.displayGIF(imgElem);
-          button.removeAttribute('disabled');
-          button.innerText = facetogif.str.START_RECORDING;
-          facetogif.elapsed = Date.now() - facetogif.start;
-          delete facetogif.start;
-          facetogif.perf = facetogif.elapsed / facetogif.duration;
-          console.log(facetogif.elapsed / 1000 + "s for " + facetogif.duration / 1000 + "s", facetogif.perf);
-      };
-    }, false);
-  }());
-
-  </script>
+  <script src=app.js></script>
   </body>
 </html>
