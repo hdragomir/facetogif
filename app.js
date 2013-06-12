@@ -2,7 +2,7 @@
   var video, button, canvas, ctx, interval, gif;
 
   function thisBrowserIsBad() {
-    console.log('nope');
+    console.log('This browser does not support getUserMedia yet.');
   }
 
   function getStream(callback, fail) {
@@ -44,15 +44,15 @@
       var container = (function (e) {
         while (e.parentNode && !e.classList.contains('generated-gif') && (e = e.parentNode)) ;
         return e;
-      } (e.srcElement));
-      if (e.srcElement.classList.contains('img')) {
-        e.srcElement.href = container.querySelector('.generated-img').src;
+      } (e.target));
+      if (e.target.classList.contains('img')) {
+        e.target.href = container.querySelector('.generated-img').src;
       }
     }, false);
 
     document.getElementById('put-your-face-here').addEventListener('click', function (e) {
-      var button = e.srcElement;
-      if (button.classList.contains('clicked')) {
+      var button = e.target;
+      if (button.classList.contains('clicked') && facetogif.stream) {
         facetogif.stream.stop();
         facetogif.stream = null;
         facetogif.video.removeAttribute('src');
