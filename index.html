@@ -2,73 +2,195 @@
 <html>
   <head>
     <meta charset=utf-8>
-    <title>facey</title>
+    <title>face to gif</title>
     <style>
-      canvas, video {
-        width: 640px;
-        height: 480px;
-        background: rgba(0,255,0, 0.1);
+      .container {
+        width: 40em;
+        margin: 1em auto;
       }
-
       canvas, button, video, img {
-        display: block;
-        margin: 0 auto;
       }
       video + button {
         opacity: 0;
         transition: opacity 0.3s;
+        visibility: hidden;
       }
       video[src] + button {
         opacity: 1;
+        visibility: visible;
       }
 
       canvas {
-        /*display: none;*/
+        display: none;
+      }
+
+      .ui-button {
+        text-decoration: none;
+        border: 0;
+        width: 100%;
+        cursor: pointer;
+        color: #fff;
+        font-size: 1em;
+        line-height: 2;
+        display: block;
+        transition: all 0.3s;
+      }
+
+      .ui-button[disabled], .ui-button, .ui-button[disabled]:hover {
+        background: hsla(0,0%, 50%, 1);
+      }
+
+      .ui-button[disabled] {
+        cursor: no-drop;
+      }
+
+      .ui-button:active {
+        box-shadow: inset 0 -0.1em 1em rgba(0, 0, 1, 0.5);
+      }
+
+      .request-stream.clicked {
+        line-height: 1;
+        font-size: 0.5em;
+        opacity: 0.5;
+      }
+      .request-stream.clicked:hover {
+        opacity: 1;
+        font-size: 1em;
+        line-height: 2;
+      }
+
+      .request-stream.clicked.streaming {
+        background: hsla(0, 30%, 50%, 1);
+      }
+
+      .recording-toggle {
+        background: hsla(120, 25%, 50%, 1);
+      }
+
+      .recording-toggle:hover {
+        background: hsla(200, 30%, 60%, 1);
+      }
+
+      .generated-gif {
+        position: relative;
+      }
+
+      .generated-gif .controls {
+        position: absolute;
+        right: 0.5em;
+        top: 0.5em;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .generated-gif .controls .ui-button {
+        padding: 0 0.7em;
+        display: inline-block;
+        width: auto;
+      }
+
+      .generated-gif:hover .controls {
+        opacity: 1;
       }
 
     </style>
   </head>
   <body>
-  <video autoplay height=480 width=640 ></video>
-  <button id=start-recording>start</button>
-  <canvas height=480 width=640></canvas>
+    <div class=container>
+      <button class="ui-button request-stream" id=put-your-face-here>put your face here</button>
+      <video autoplay height=480 width=640 ></video>
+      <button class="ui-button recording-toggle" id=start-recording>start recording</button>
+      <canvas height=480 width=640></canvas>
+      <output id=gifs-go-here></output>
+    </div>
+    <div id="controls-template" class="controls">
+      <a class="ui-button download img">download gif</a>
+    </div>
   <script>
   (function () {
     var video, cameraStream, button, canvas, frames = [], ctx, interval,
       worker = new Worker('worker.js');
-    worker.onmessage = function (evt) {
-        var msg = evt.data;
-        var imgElem = document.createElement("img");
-        var base64Str = btoa(msg.gifDataStr);
-        imgElem.src = "data:image/gif;base64," + base64Str;
-        document.body.appendChild(imgElem);
-    };
-    worker.onerror = function (err) {
-        alert(err);
-    };
+
+
+    function thisBrowserIsBad() {
+      console.log('nope');
+    }
+
+    function getStream(callback, fail) {
+      (navigator.getUserMedia || navigator.webkitGetUserMedia || thisBrowserIsBad).call(navigator, {video: true}, callback, fail);
+    }
+
+    var facetogif = {
+      savedFrames: [],
+      stream: null,
+      video: null,
+      gifContainer: null,
+      controls: null,
+      str: {
+        ASK_FOR_PERMISSION: "put your face here",
+        STOP_STREAMING: "stop streaming",
+        START_RECORDING: "start recording",
+        STOP_RECORDING: "make gif",
+        COMPILING: "\"it's compiling...\""
+      },
+
+      displayGIF: function (img) {
+        var article = document.createElement('article');
+        article.appendChild(facetogif.controls.cloneNode(true));
+        article.appendChild(img);
+        article.className = "generated-gif";
+        article.dataset.framesID = img.dataset.framesID;
+        facetogif.gifContainer.appendChild(article);
+      }
+    }
 
     document.addEventListener('DOMContentLoaded', function (e) {
-      video = document.querySelector('video');
+      facetogif.video = document.querySelector('video');
+      facetogif.controls = document.getElementById('controls-template');
+      facetogif.controls.parentNode.removeChild(facetogif.controls);
+      facetogif.controls.removeAttribute('id');
+
       canvas = document.querySelector('canvas');
-      video.addEventListener('click', function (e) {
-        if (cameraStream) {
-          cameraStream.stop();
-          cameraStream = null;
-          video.removeAttribute('src');
-        } else {
-          navigator.webkitGetUserMedia({video: true}, function (stream) {
-            video.src = window.URL.createObjectURL(stream);
-            cameraStream = stream;
-          }, function (fail) { console.log(fail); });
+      facetogif.gifContainer = document.getElementById('gifs-go-here');
+      facetogif.gifContainer.addEventListener('click', function (e) {
+        var container = function (e) {
+          while (e.parentNode && !e.classList.contains('generated-gif')) {
+           e = e.parentNode;
+          }
+          return e;
+        } (e.srcElement);
+        if (e.srcElement.classList.contains('img')) {
+          e.srcElement.setAttribute('download', "your-face-giffed.gif");
+          e.srcElement.setAttribute('href', container.querySelector('img').src);
         }
       }, false);
+
+      document.getElementById('put-your-face-here').addEventListener('click', function (e) {
+        var button = e.srcElement;
+        if (button.classList.contains('clicked')) {
+          facetogif.stream.stop();
+          facetogif.stream = null;
+          facetogif.video.removeAttribute('src');
+          button.innerText = facetogif.str.ASK_FOR_PERMISSION;
+          button.classList.remove('streaming');
+        } else {
+          getStream(function (stream) {
+            button.innerText = facetogif.str.STOP_STREAMING;
+            button.classList.add('streaming');
+            facetogif.video.src = window.URL.createObjectURL(stream);
+            facetogif.stream = stream;
+          }, function (fail) { console.log(fail); });
+        }
+        button.classList.toggle('clicked');
+      }, false);
+
       button = document.getElementById('start-recording');
       button.addEventListener('click', function (e) {
         button.classList.toggle('recording');
         if (ctx) {
-          button.innerText = "start";
+          button.innerText = facetogif.str.COMPILING;
           clearInterval(interval);
-          //return ctx = null;
+          facetogif.duration = frames.length * 67;
+          facetogif.start = Date.now();
           worker.postMessage({
               imageDataList: frames,
               width: 640,
@@ -76,18 +198,33 @@
               paletteSize: 255,
               delayTimeInMS: 67,
           });
-          frames = [];
+          button.disabled = true;
           ctx = null;
-
         } else {
-          button.innerText = "stop";
+          button.innerText = facetogif.str.STOP_RECORDING;
           ctx = canvas.getContext('2d');
           interval = setInterval(function () {
-            ctx.drawImage(video, 0,0, 640, 480);
+            ctx.drawImage(facetogif.video, 0,0, 640,480);
             frames.push(ctx.getImageData(0,0, 640,480));
           }, 67);
         }
       }, false);
+
+      worker.onmessage = function (evt) {
+          var msg = evt.data;
+          var imgElem = document.createElement("img");
+          var base64Str = btoa(msg.gifDataStr);
+          imgElem.src = "data:image/gif;base64," + base64Str;
+          imgElem.dataset.framesID = facetogif.savedFrames.push(frames) - 1;
+          frames = [];
+          facetogif.displayGIF(imgElem);
+          button.removeAttribute('disabled');
+          button.innerText = facetogif.str.START_RECORDING;
+          facetogif.elapsed = Date.now() - facetogif.start;
+          delete facetogif.start;
+          facetogif.perf = facetogif.elapsed / facetogif.duration;
+          console.log(facetogif.elapsed / 1000 + "s for " + facetogif.duration / 1000 + "s", facetogif.perf);
+      };
     }, false);
   }());
 
