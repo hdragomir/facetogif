@@ -11,19 +11,20 @@
       .container {
         width: 40em;
         margin: 1em auto;
+        position: relative;
       }
       canvas, button, video, img {
       }
       video ~ .gif-maker-controls {
         opacity: 0;
-        transition: opacity 0.3s, visibility 0s 0.3s;
+        transition: opacity 0.2s, visibility 0s 0.2s;
         visibility: hidden;
       }
 
       video[src] ~ .gif-maker-controls {
         opacity: 1;
         visibility: visible;
-        transition: opacity 0.3s, visibility 0s 0s;
+        transition: opacity 0.2s, visibility 0s 0s;
       }
 
       .gif-maker-controls {
@@ -41,7 +42,7 @@
         display: none;
         width: 20%;
         float: left;
-        transition: all 0.3s, display 0s 0.31s;
+        transition: all 0.2s, display 0s 0.21s;
       }
       .gif-maker-controls .recording ~ .pause-recording {
         display: block;
@@ -61,7 +62,7 @@
         font-size: 1em;
         line-height: 2;
         display: block;
-        transition: all 0.3s;
+        transition: all 0.2s;
       }
       .ui-button:hover {
         background: hsla(200, 30%, 60%, 1);
@@ -105,10 +106,10 @@
 
       .generated-gif .controls {
         position: absolute;
-        right: 0.5em;
-        top: 0.5em;
+        right: 1.5em;
+        top: 2.5em;
         opacity: 0;
-        transition: opacity 0.3s;
+        transition: opacity 0.2s;
       }
       .generated-gif .controls .ui-button {
         padding: 0 0.7em;
@@ -120,11 +121,35 @@
         opacity: 1;
       }
 
+      .separate {
+        border-top: 0.1em solid hsla(0,0%, 80%, 1);
+        display: block;
+        padding: 2em 1em 0;
+        margin: 2em -1em 0;
+      }
+
+      .recording-indicator {
+        background: hsla(0, 50%, 50%, 0.5);
+        position: absolute;
+        width: 1em;
+        height: 1em;
+        border-radius: 50%;
+        right: 0.5em;
+        margin-top: 0.5em;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .recording-indicator.on {
+        opacity: 1;
+      }
+
     </style>
   </head>
   <body>
     <div class=container>
       <button class="ui-button request-stream" id=put-your-face-here>put your face here</button>
+      <span class=recording-indicator id=recording-indicator></span>
       <video autoplay height=480 width=640 ></video>
       <div class="gif-maker-controls">
         <button class="ui-button recording-toggle" id=start-recording>start recording</button>

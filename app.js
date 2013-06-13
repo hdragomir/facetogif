@@ -14,6 +14,7 @@
     video: null,
     gifContainer: null,
     controls: null,
+    recIndicator: null,
     str: {
       ASK_FOR_PERMISSION: "put your face here",
       STOP_STREAMING: "stop streaming",
@@ -28,7 +29,7 @@
       var article = document.createElement('article');
       article.appendChild(facetogif.controls.cloneNode(true));
       article.appendChild(img);
-      article.className = "generated-gif";
+      article.className = "generated-gif separate";
       img.className = "generated-img";
       facetogif.gifContainer.appendChild(article);
     }
@@ -39,6 +40,8 @@
     facetogif.controls = document.getElementById('controls-template');
     facetogif.controls.parentNode.removeChild(facetogif.controls);
     facetogif.controls.removeAttribute('id');
+
+    facetogif.recIndicator = document.getElementById('recording-indicator');
 
     canvas = document.querySelector('canvas');
     facetogif.gifContainer = document.getElementById('gifs-go-here');
@@ -76,8 +79,10 @@
     button.addEventListener('click', function (e) {
       if (recorder.state === recorder.states.RECORDING || recorder.state === recorder.states.PAUSED) {
         button.classList.remove('recording');
+        pause.innerText = facetogif.str.PAUSE;
         button.innerText = facetogif.str.COMPILING;
         clearInterval(recorder.interval);
+        facetogif.recIndicator.classList.remove('on');
         button.disabled = true;
         recorder.state = recorder.states.COMPILING;
         recorder.gif.on('finished', function (blob) {
@@ -92,12 +97,16 @@
 
         ctx = null;
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
-        button.classList.add('recording');
-        recorder.state = recorder.states.RECORDING;
-        button.innerText = facetogif.str.STOP_RECORDING;
         ctx = canvas.getContext('2d');
         recorder.gif = new GIF({ workers: 2, width: 640, height: 480 });
-        recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+        recorder.state = recorder.states.BUSY;
+        countdown(button, function () {
+          facetogif.recIndicator.classList.add('on');
+          button.classList.add('recording');
+          recorder.state = recorder.states.RECORDING;
+          button.innerText = facetogif.str.STOP_RECORDING;
+          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+        });
       }
     }, false);
     pause.addEventListener('click', function (e) {
@@ -105,10 +114,15 @@
         clearInterval(recorder.interval);
         recorder.state = recorder.states.PAUSED;
         pause.innerText = facetogif.str.RESUME;
+        facetogif.recIndicator.classList.remove('on');
       } else if (recorder.state === recorder.states.PAUSED) {
-        recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
-        pause.innerText = facetogif.str.PAUSE;
-        recorder.state = recorder.states.RECORDING;
+        recorder.state = recorder.states.BUSY;
+        countdown(pause, function () {
+          facetogif.recIndicator.classList.add('on');
+          recorder.state = recorder.states.RECORDING;
+          pause.innerText = facetogif.str.PAUSE;
+          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+        });
       }
     }, false);
 
@@ -123,7 +137,8 @@
       RECORDING: 1,
       PAUSED: 2,
       COMPILING: 3,
-      FINISHED: 4
+      FINISHED: 4,
+      BUSY: 5
     }
   };
 
@@ -132,6 +147,20 @@
       ctx.drawImage(facetogif.video, 0,0, 640,480);
       gif.addFrame(ctx, {delay: 67, copy: true});
     }
+  }
+
+  function countdown(node, callback) {
+    var s = 3;
+    fn = function () {
+      node.innerHTML = s === 0 ? "go crazy" : s;
+      s--;
+      if (s < 0) {
+        callback();
+      } else {
+        setTimeout(fn, 1000);
+      }
+    }
+    fn();
   }
 
 } ());
