@@ -72,6 +72,58 @@
         background: hsla(0,0%, 50%, 1);
       }
 
+      .ui-button[disabled].processing, .ui-button.processing {
+        background-color: hsla(200, 30%, 60%, 1);
+        background-image: -webkit-gradient(linear, 0 0, 100% 100%,
+                    color-stop(.15, rgba(255, 255, 255, .1)), color-stop(.15, transparent),
+                    color-stop(.5, transparent), color-stop(.5, rgba(255, 255, 255, .1)),
+                    color-stop(.75, rgba(255, 255, 255, .1)), color-stop(.75, transparent),
+                    to(transparent));
+        background-image: -webkit-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+                  transparent 75%, transparent);
+        background-image: -moz-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+                  transparent 75%, transparent);
+        background-image: -ms-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+                  transparent 75%, transparent);
+        background-image: linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+                  transparent 75%, transparent);
+        background-size: 1em 1em;
+        background-position: 0 0;
+        -webkit-animation: slide-processing-bg infinite 0.4s linear;
+        -ms-animation: slide-processing-bg infinite 0.4s linear;
+        -moz-animation: slide-processing-bg infinite 0.4s linear;
+        animation: slide-processing-bg infinite 0.4s linear;
+      }
+
+      @keyframes slide-processing-bg {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 0.9em 0;
+        }
+      }
+      @-webkit-keyframes slide-processing-bg {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 0.999em 0;
+        }
+      }
+      @-moz-keyframes slide-processing-bg {
+        0% {
+          background-position: 0 0;
+        }
+        100% {
+          background-position: 0.999em 0;
+        }
+      }
+
       .ui-button[disabled] {
         cursor: no-drop;
         opacity: 1;

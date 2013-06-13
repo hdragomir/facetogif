@@ -84,12 +84,14 @@
         clearInterval(recorder.interval);
         facetogif.recIndicator.classList.remove('on');
         button.disabled = true;
+        button.classList.add('processing');
         recorder.state = recorder.states.COMPILING;
         recorder.gif.on('finished', function (blob) {
           var img = document.createElement('img');
           img.src = URL.createObjectURL(blob);
           facetogif.displayGIF(img);
           button.removeAttribute('disabled');
+          button.classList.remove('processing');
           button.innerText = facetogif.str.START_RECORDING;
           recorder.state = recorder.states.FINISHED;
         });
