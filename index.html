@@ -21,7 +21,8 @@
         visibility: hidden;
       }
 
-      video[src] ~ .gif-maker-controls {
+      video[src] ~ .gif-maker-controls,
+      .gif-maker-controls.busy {
         opacity: 1;
         visibility: visible;
         transition: opacity 0.2s, visibility 0s 0s;

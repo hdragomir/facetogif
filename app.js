@@ -85,6 +85,7 @@
         facetogif.recIndicator.classList.remove('on');
         button.disabled = true;
         button.classList.add('processing');
+        button.parentNode.classList.add('busy');
         recorder.state = recorder.states.COMPILING;
         recorder.gif.on('finished', function (blob) {
           var img = document.createElement('img');
@@ -92,6 +93,7 @@
           facetogif.displayGIF(img);
           button.removeAttribute('disabled');
           button.classList.remove('processing');
+          button.parentNode.classList.remove('busy');
           button.innerText = facetogif.str.START_RECORDING;
           recorder.state = recorder.states.FINISHED;
         });
@@ -146,8 +148,14 @@
 
   function recorder_fn(ctx, gif) {
     return function () {
-      ctx.drawImage(facetogif.video, 0,0, 640,480);
-      gif.addFrame(ctx, {delay: 67, copy: true});
+      if (facetogif.video.src) {
+        ctx.drawImage(facetogif.video, 0,0, 640,480);
+        gif.addFrame(ctx, {delay: 67, copy: true});
+      } else {
+        clearInterval(recorder.interval);
+        facetogif.recIndicator.classList.remove('on');
+        recorder.state = recorder.states.IDLE;
+      }
     }
   }
 
