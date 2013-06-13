@@ -14,14 +14,37 @@
       }
       canvas, button, video, img {
       }
-      video + button {
+      video ~ .gif-maker-controls {
         opacity: 0;
-        transition: opacity 0.3s;
+        transition: opacity 0.3s, visibility 0s 0.3s;
         visibility: hidden;
       }
-      video[src] + button {
+
+      video[src] ~ .gif-maker-controls {
         opacity: 1;
         visibility: visible;
+        transition: opacity 0.3s, visibility 0s 0s;
+      }
+
+      .gif-maker-controls {
+         overflow: hidden;
+         height: 2.6em;
+       }
+
+      .gif-maker-controls .recording {
+        width: 77%;
+        margin-right: 3%;
+        float: left;
+      }
+
+      .gif-maker-controls .pause-recording {
+        display: none;
+        width: 20%;
+        float: left;
+        transition: all 0.3s, display 0s 0.31s;
+      }
+      .gif-maker-controls .recording ~ .pause-recording {
+        display: block;
       }
 
       canvas {
@@ -39,6 +62,9 @@
         line-height: 2;
         display: block;
         transition: all 0.3s;
+      }
+      .ui-button:hover {
+        background: hsla(200, 30%, 60%, 1);
       }
 
       .ui-button[disabled], .ui-button, .ui-button[disabled]:hover {
@@ -73,10 +99,6 @@
         background: hsla(120, 25%, 50%, 1);
       }
 
-      .recording-toggle:hover {
-        background: hsla(200, 30%, 60%, 1);
-      }
-
       .generated-gif {
         position: relative;
       }
@@ -104,7 +126,10 @@
     <div class=container>
       <button class="ui-button request-stream" id=put-your-face-here>put your face here</button>
       <video autoplay height=480 width=640 ></video>
-      <button class="ui-button recording-toggle" id=start-recording>start recording</button>
+      <div class="gif-maker-controls">
+        <button class="ui-button recording-toggle" id=start-recording>start recording</button>
+        <button class="ui-button pause-recording recording-toggle" id=pause-recording>▮▮</button>
+      </div>
       <canvas height=480 width=640 ></canvas>
       <output id=gifs-go-here></output>
     </div>

@@ -1,5 +1,5 @@
 (function () {
-  var video, button, canvas, ctx, interval, gif;
+  var video, button, canvas, ctx, interval;
 
   function thisBrowserIsBad() {
     console.log('This browser does not support getUserMedia yet.');
@@ -19,7 +19,9 @@
       STOP_STREAMING: "stop streaming",
       START_RECORDING: "start recording",
       STOP_RECORDING: "make gif",
-      COMPILING: "\"it's compiling...\""
+      COMPILING: "\"it's compiling...\"",
+      PAUSE: "▮▮",
+      RESUME: "►"
     },
 
     displayGIF: function (img) {
@@ -70,33 +72,66 @@
     }, false);
 
     button = document.getElementById('start-recording');
+    var pause = document.getElementById('pause-recording');
     button.addEventListener('click', function (e) {
-      button.classList.toggle('recording');
-      if (ctx) {
+      if (recorder.state === recorder.states.RECORDING || recorder.state === recorder.states.PAUSED) {
+        button.classList.remove('recording');
         button.innerText = facetogif.str.COMPILING;
-        clearInterval(interval);
+        clearInterval(recorder.interval);
         button.disabled = true;
-        gif.on('finished', function (blob) {
+        recorder.state = recorder.states.COMPILING;
+        recorder.gif.on('finished', function (blob) {
           var img = document.createElement('img');
           img.src = URL.createObjectURL(blob);
           facetogif.displayGIF(img);
           button.removeAttribute('disabled');
           button.innerText = facetogif.str.START_RECORDING;
+          recorder.state = recorder.states.FINISHED;
         });
-        gif.render();
+        recorder.gif.render();
 
         ctx = null;
-      } else {
+      } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
+        button.classList.add('recording');
+        recorder.state = recorder.states.RECORDING;
         button.innerText = facetogif.str.STOP_RECORDING;
         ctx = canvas.getContext('2d');
-        gif = new GIF({ workers: 2, width: 640, height: 480 });
-        interval = setInterval(function () {
-          ctx.drawImage(facetogif.video, 0,0, 640,480);
-          gif.addFrame(ctx, {delay: 67, copy: true});
-        }, 67);
+        recorder.gif = new GIF({ workers: 2, width: 640, height: 480 });
+        recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+      }
+    }, false);
+    pause.addEventListener('click', function (e) {
+      if (recorder.state === recorder.states.RECORDING) {
+        clearInterval(recorder.interval);
+        recorder.state = recorder.states.PAUSED;
+        pause.innerText = facetogif.str.RESUME;
+      } else if (recorder.state === recorder.states.PAUSED) {
+        recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+        pause.innerText = facetogif.str.PAUSE;
+        recorder.state = recorder.states.RECORDING;
       }
     }, false);
 
   }, false);
+
+  var recorder = {
+    state: 0,
+    gif: null,
+    interval: null,
+    states: {
+      IDLE: 0,
+      RECORDING: 1,
+      PAUSED: 2,
+      COMPILING: 3,
+      FINISHED: 4
+    }
+  };
+
+  function recorder_fn(ctx, gif) {
+    return function () {
+      ctx.drawImage(facetogif.video, 0,0, 640,480);
+      gif.addFrame(ctx, {delay: 67, copy: true});
+    }
+  }
 
 } ());
