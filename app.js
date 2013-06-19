@@ -6,7 +6,7 @@
   }
 
   function getStream(callback, fail) {
-    (navigator.getUserMedia || navigator.webkitGetUserMedia || thisBrowserIsBad).call(navigator, {video: true}, callback, fail);
+    (navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia || thisBrowserIsBad).call(navigator, {video: true}, callback, fail);
   }
 
   var facetogif = {
