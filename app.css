@@ -14,8 +14,6 @@ a, .linklike {
   margin: 1em auto;
   position: relative;
 }
-canvas, button, video, img {
-}
 video ~ .gif-maker-controls {
   opacity: 0;
   transition: opacity 0.2s, visibility 0s 0.2s;
@@ -205,6 +203,11 @@ canvas {
 
 .recording-indicator.on {
   opacity: 1;
+}
+
+.generated-img {
+  width: 640px;
+  height: 480px;
 }
 
 .textish-form {

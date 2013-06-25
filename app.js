@@ -10,6 +10,11 @@
   }
 
   var facetogif = {
+    gifSettings: {
+      w: 320,
+      h: 240,
+      ms: 125
+    },
     stream: null,
     video: null,
     gifContainer: null,
@@ -117,15 +122,17 @@
         ctx = null;
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
         track('recording', 'start');
+        canvas.height = facetogif.gifSettings.h;
+        canvas.width = facetogif.gifSettings.w;
         ctx = canvas.getContext('2d');
-        recorder.gif = new GIF({ workers: 2, width: 640, height: 480 });
+        recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 30 });
         recorder.state = recorder.states.BUSY;
         countdown(button, function () {
           facetogif.recIndicator.classList.add('on');
           button.classList.add('recording');
           recorder.state = recorder.states.RECORDING;
           button.innerText = facetogif.str.STOP_RECORDING;
-          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), facetogif.gifSettings.ms);
         });
       }
     }, false);
@@ -143,7 +150,7 @@
           facetogif.recIndicator.classList.add('on');
           recorder.state = recorder.states.RECORDING;
           pause.innerText = facetogif.str.PAUSE;
-          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), 67);
+          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), facetogif.gifSettings.ms);
         });
       }
     }, false);
@@ -167,8 +174,8 @@
   function recorder_fn(ctx, gif) {
     return function () {
       if (facetogif.video.src) {
-        ctx.drawImage(facetogif.video, 0,0, 640,480);
-        gif.addFrame(ctx, {delay: 67, copy: true});
+        ctx.drawImage(facetogif.video, 0,0, facetogif.gifSettings.w,facetogif.gifSettings.h);
+        gif.addFrame(ctx, {delay: facetogif.gifSettings.ms, copy: true});
       } else {
         clearInterval(recorder.interval);
         facetogif.recIndicator.classList.remove('on');
