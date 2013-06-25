@@ -68,13 +68,16 @@
     document.getElementById('put-your-face-here').addEventListener('click', function (e) {
       var button = e.target;
       if (button.classList.contains('clicked') && facetogif.stream) {
+        track('streaming', 'stop');
         facetogif.stream.stop();
         facetogif.stream = null;
         facetogif.video.removeAttribute('src');
         button.innerText = facetogif.str.ASK_FOR_PERMISSION;
         button.classList.remove('streaming');
       } else {
+        track('streaming', 'request');
         getStream(function (stream) {
+          track('streaming', 'start');
           button.innerText = facetogif.str.STOP_STREAMING;
           button.classList.add('streaming');
           facetogif.video.src = window.URL.createObjectURL(stream);
