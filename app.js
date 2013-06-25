@@ -13,7 +13,7 @@
     gifSettings: {
       w: 320,
       h: 240,
-      ms: 125
+      ms: 100
     },
     stream: null,
     video: null,
@@ -125,7 +125,7 @@
         canvas.height = facetogif.gifSettings.h;
         canvas.width = facetogif.gifSettings.w;
         ctx = canvas.getContext('2d');
-        recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 30 });
+        recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
         recorder.state = recorder.states.BUSY;
         countdown(button, function () {
           facetogif.recIndicator.classList.add('on');
