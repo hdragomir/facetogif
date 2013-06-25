@@ -1,5 +1,6 @@
 body, .ui-button, .ui-text {
   font-family: "Myriad Pro","Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
+  color: hsl(0, 0%, 23%);
 }
 
 a, .linklike {
