@@ -1,0 +1,235 @@
+body, .ui-button, .ui-text {
+  font-family: "Myriad Pro","Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
+}
+
+a, .linklike {
+  color: hsl(210, 53%, 51%);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.container {
+  width: 40em;
+  margin: 1em auto;
+  position: relative;
+}
+canvas, button, video, img {
+}
+video ~ .gif-maker-controls {
+  opacity: 0;
+  transition: opacity 0.2s, visibility 0s 0.2s;
+  visibility: hidden;
+}
+
+video[src] ~ .gif-maker-controls,
+.gif-maker-controls.busy {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.2s, visibility 0s 0s;
+}
+
+.gif-maker-controls {
+   overflow: hidden;
+   height: 2.6em;
+ }
+
+.gif-maker-controls .recording {
+  width: 77%;
+  margin-right: 3%;
+  float: left;
+}
+
+.gif-maker-controls .pause-recording {
+  display: none;
+  width: 20%;
+  float: left;
+  transition: all 0.2s, display 0s 0.21s;
+}
+.gif-maker-controls .recording ~ .pause-recording {
+  display: block;
+}
+
+canvas {
+  display: none;
+}
+
+.ui-button {
+  text-decoration: none;
+  border-radius: 0.1em;
+  border: 0;
+  width: 100%;
+  cursor: pointer;
+  color: #fff;
+  font-size: 1em;
+  line-height: 2;
+  display: block;
+  transition: all 0.2s;
+  user-select: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+}
+
+.ui-button:hover {
+  background: hsla(210, 30%, 60%, 1);
+}
+
+.ui-button[disabled], .ui-button, .ui-button[disabled]:hover {
+  background: hsla(0,0%, 50%, 1);
+}
+
+.ui-button[disabled].processing, .ui-button.processing {
+  background-color: hsla(200, 30%, 60%, 1);
+  background-image: -webkit-gradient(linear, 0 0, 100% 100%,
+              color-stop(.15, rgba(255, 255, 255, .1)), color-stop(.15, transparent),
+              color-stop(.5, transparent), color-stop(.5, rgba(255, 255, 255, .1)),
+              color-stop(.75, rgba(255, 255, 255, .1)), color-stop(.75, transparent),
+              to(transparent));
+  background-image: -webkit-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+            transparent 75%, transparent);
+  background-image: -moz-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+            transparent 75%, transparent);
+  background-image: -ms-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+            transparent 75%, transparent);
+  background-image: linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
+            transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
+            transparent 75%, transparent);
+  background-size: 1em 1em;
+  background-position: 0 0;
+  -webkit-animation: slide-processing-bg infinite 0.4s linear;
+  -ms-animation: slide-processing-bg infinite 0.4s linear;
+  -moz-animation: slide-processing-bg infinite 0.4s linear;
+  animation: slide-processing-bg infinite 0.4s linear;
+}
+
+@keyframes slide-processing-bg {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0.9em 0;
+  }
+}
+@-webkit-keyframes slide-processing-bg {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0.999em 0;
+  }
+}
+@-moz-keyframes slide-processing-bg {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0.999em 0;
+  }
+}
+
+.ui-button[disabled] {
+  cursor: no-drop;
+  opacity: 1;
+}
+
+.ui-button:active {
+  box-shadow: inset 0 -0.1em 1em rgba(0, 0, 1, 0.5);
+}
+
+.request-stream.clicked {
+  line-height: 1;
+  font-size: 0.5em;
+  opacity: 0.5;
+}
+.request-stream.clicked:hover {
+  opacity: 1;
+  font-size: 1em;
+  line-height: 2;
+}
+
+.request-stream.clicked.streaming {
+  background: hsla(0, 30%, 50%, 1);
+}
+
+.ui-button.to-danger:hover {
+  background: hsla(0, 30%, 50%, 1);
+}
+
+.recording-toggle {
+  background: hsla(120, 25%, 50%, 1);
+}
+
+.generated-gif {
+  position: relative;
+}
+
+.generated-gif .controls {
+  position: absolute;
+  right: 1.5em;
+  top: 2.5em;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ui-button.control {
+  padding: 0 0.7em;
+  display: inline-block;
+  width: auto;
+}
+
+.generated-gif:hover .controls {
+  opacity: 1;
+}
+
+.separate {
+  border-top: 0.1em solid hsla(0,0%, 80%, 1);
+  display: block;
+  padding: 2em 1em 0;
+  margin: 2em -1em 0;
+}
+
+.recording-indicator {
+  background: hsla(0, 50%, 50%, 0.5);
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  border-radius: 50%;
+  right: 0.5em;
+  margin-top: 0.5em;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.recording-indicator.on {
+  opacity: 1;
+}
+
+.textish-form {
+  display: inline-block;
+}
+
+.ui-text {
+  border: none;
+  background: transparent;
+  display: inline;
+  font-size: 1em;
+}
+
+.faqesq {
+  background: white;
+  font-size: 1em/1.4;
+}
+
+.faq {
+  font-size: 1.1em;
+}
+
+.faqa {
+  margin-left: 0;
+}
+
+.faqa + .faq {
+  margin-top: 1.5em;
+}

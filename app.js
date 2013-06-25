@@ -2,7 +2,7 @@
   var video, button, canvas, ctx, interval;
 
   function thisBrowserIsBad() {
-    console.log('This browser does not support getUserMedia yet.');
+    console.log(facetogif.str.nope);
   }
 
   function getStream(callback, fail) {
@@ -22,7 +22,9 @@
       STOP_RECORDING: "make gif",
       COMPILING: "\"it's compiling...\"",
       PAUSE: "▮▮",
-      RESUME: "►"
+      RESUME: "►",
+      nope: "This browser does not support getUserMedia yet.",
+      rusure: "Are you sure?"
     },
 
     displayGIF: function (img) {
@@ -45,13 +47,21 @@
 
     canvas = document.querySelector('canvas');
     facetogif.gifContainer = document.getElementById('gifs-go-here');
+
     facetogif.gifContainer.addEventListener('click', function (e) {
       var container = (function (e) {
         while (e.parentNode && !e.classList.contains('generated-gif') && (e = e.parentNode)) ;
         return e;
       } (e.target));
-      if (e.target.classList.contains('img')) {
+      if (e.target.classList.contains('download')) {
+        track('generated-gif', 'download');
         e.target.href = container.querySelector('.generated-img').src;
+      } else if (e.target.classList.contains('remove')) {
+        e.preventDefault();
+        track('generated-gif', 'remove');
+        if (confirm(facetogif.str.rusure)) {
+          container.parentNode.removeChild(container);
+        }
       }
     }, false);
 
@@ -96,11 +106,14 @@
           button.parentNode.classList.remove('busy');
           button.innerText = facetogif.str.START_RECORDING;
           recorder.state = recorder.states.FINISHED;
+          track('generated-gif', 'created');
         });
+        track('recording', 'finished');
         recorder.gif.render();
 
         ctx = null;
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
+        track('recording', 'start');
         ctx = canvas.getContext('2d');
         recorder.gif = new GIF({ workers: 2, width: 640, height: 480 });
         recorder.state = recorder.states.BUSY;
@@ -115,12 +128,14 @@
     }, false);
     pause.addEventListener('click', function (e) {
       if (recorder.state === recorder.states.RECORDING) {
+        track('recording', 'pause');
         clearInterval(recorder.interval);
         recorder.state = recorder.states.PAUSED;
         pause.innerText = facetogif.str.RESUME;
         facetogif.recIndicator.classList.remove('on');
       } else if (recorder.state === recorder.states.PAUSED) {
         recorder.state = recorder.states.BUSY;
+        track('recording', 'resume');
         countdown(pause, function () {
           facetogif.recIndicator.classList.add('on');
           recorder.state = recorder.states.RECORDING;
@@ -162,7 +177,7 @@
   function countdown(node, callback) {
     var s = 3;
     fn = function () {
-      node.innerHTML = s === 0 ? "go crazy" : s;
+      node.innerHTML = s;
       s--;
       if (s < 0) {
         callback();
@@ -172,5 +187,12 @@
     }
     fn();
   }
+
+  function track() {
+    if (typeof ga !== "undefined") {
+      ga.apply(ga, ['send', 'event'].concat(arguments));
+    }
+  }
+
 
 } ());

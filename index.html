@@ -3,201 +3,7 @@
   <head>
     <meta charset=utf-8>
     <title>face to gif</title>
-    <style>
-
-      body, .ui-button {
-        font-family: "Myriad Pro","Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
-      }
-      .container {
-        width: 40em;
-        margin: 1em auto;
-        position: relative;
-      }
-      canvas, button, video, img {
-      }
-      video ~ .gif-maker-controls {
-        opacity: 0;
-        transition: opacity 0.2s, visibility 0s 0.2s;
-        visibility: hidden;
-      }
-
-      video[src] ~ .gif-maker-controls,
-      .gif-maker-controls.busy {
-        opacity: 1;
-        visibility: visible;
-        transition: opacity 0.2s, visibility 0s 0s;
-      }
-
-      .gif-maker-controls {
-         overflow: hidden;
-         height: 2.6em;
-       }
-
-      .gif-maker-controls .recording {
-        width: 77%;
-        margin-right: 3%;
-        float: left;
-      }
-
-      .gif-maker-controls .pause-recording {
-        display: none;
-        width: 20%;
-        float: left;
-        transition: all 0.2s, display 0s 0.21s;
-      }
-      .gif-maker-controls .recording ~ .pause-recording {
-        display: block;
-      }
-
-      canvas {
-        display: none;
-      }
-
-      .ui-button {
-        text-decoration: none;
-        border-radius: 0.1em;
-        border: 0;
-        width: 100%;
-        cursor: pointer;
-        color: #fff;
-        font-size: 1em;
-        line-height: 2;
-        display: block;
-        transition: all 0.2s;
-      }
-      .ui-button:hover {
-        background: hsla(200, 30%, 60%, 1);
-      }
-
-      .ui-button[disabled], .ui-button, .ui-button[disabled]:hover {
-        background: hsla(0,0%, 50%, 1);
-      }
-
-      .ui-button[disabled].processing, .ui-button.processing {
-        background-color: hsla(200, 30%, 60%, 1);
-        background-image: -webkit-gradient(linear, 0 0, 100% 100%,
-                    color-stop(.15, rgba(255, 255, 255, .1)), color-stop(.15, transparent),
-                    color-stop(.5, transparent), color-stop(.5, rgba(255, 255, 255, .1)),
-                    color-stop(.75, rgba(255, 255, 255, .1)), color-stop(.75, transparent),
-                    to(transparent));
-        background-image: -webkit-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
-                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
-                  transparent 75%, transparent);
-        background-image: -moz-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
-                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
-                  transparent 75%, transparent);
-        background-image: -ms-linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
-                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
-                  transparent 75%, transparent);
-        background-image: linear-gradient(-45deg, rgba(255, 255, 255, .1) 25%, transparent 25%,
-                  transparent 50%, rgba(255, 255, 255, .1) 50%, rgba(255, 255, 255, .1) 75%,
-                  transparent 75%, transparent);
-        background-size: 1em 1em;
-        background-position: 0 0;
-        -webkit-animation: slide-processing-bg infinite 0.4s linear;
-        -ms-animation: slide-processing-bg infinite 0.4s linear;
-        -moz-animation: slide-processing-bg infinite 0.4s linear;
-        animation: slide-processing-bg infinite 0.4s linear;
-      }
-
-      @keyframes slide-processing-bg {
-        0% {
-          background-position: 0 0;
-        }
-        100% {
-          background-position: 0.9em 0;
-        }
-      }
-      @-webkit-keyframes slide-processing-bg {
-        0% {
-          background-position: 0 0;
-        }
-        100% {
-          background-position: 0.999em 0;
-        }
-      }
-      @-moz-keyframes slide-processing-bg {
-        0% {
-          background-position: 0 0;
-        }
-        100% {
-          background-position: 0.999em 0;
-        }
-      }
-
-      .ui-button[disabled] {
-        cursor: no-drop;
-        opacity: 1;
-      }
-
-      .ui-button:active {
-        box-shadow: inset 0 -0.1em 1em rgba(0, 0, 1, 0.5);
-      }
-
-      .request-stream.clicked {
-        line-height: 1;
-        font-size: 0.5em;
-        opacity: 0.5;
-      }
-      .request-stream.clicked:hover {
-        opacity: 1;
-        font-size: 1em;
-        line-height: 2;
-      }
-
-      .request-stream.clicked.streaming {
-        background: hsla(0, 30%, 50%, 1);
-      }
-
-      .recording-toggle {
-        background: hsla(120, 25%, 50%, 1);
-      }
-
-      .generated-gif {
-        position: relative;
-      }
-
-      .generated-gif .controls {
-        position: absolute;
-        right: 1.5em;
-        top: 2.5em;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-      .generated-gif .controls .ui-button {
-        padding: 0 0.7em;
-        display: inline-block;
-        width: auto;
-      }
-
-      .generated-gif:hover .controls {
-        opacity: 1;
-      }
-
-      .separate {
-        border-top: 0.1em solid hsla(0,0%, 80%, 1);
-        display: block;
-        padding: 2em 1em 0;
-        margin: 2em -1em 0;
-      }
-
-      .recording-indicator {
-        background: hsla(0, 50%, 50%, 0.5);
-        position: absolute;
-        width: 1em;
-        height: 1em;
-        border-radius: 50%;
-        right: 0.5em;
-        margin-top: 0.5em;
-        opacity: 0;
-        transition: opacity 0.2s;
-      }
-
-      .recording-indicator.on {
-        opacity: 1;
-      }
-
-    </style>
+    <link href=app.css rel=stylesheet>
   </head>
   <body>
     <div class=container>
@@ -210,11 +16,47 @@
       </div>
       <canvas height=480 width=640 ></canvas>
       <output id=gifs-go-here></output>
+      <div id=faq class="faq-container separate">
+        <dl class="faqesq">
+          <dt class="faq">What is this?
+          <dd class="faqa">face to gif is a simple webapp that lets you record yourself and gives you an infinitely looping animated gif
+
+          <dt class="faq">What happens to my data?
+          <dd class="faqa">The application is completely client side. That means that nobody else will see your gif, stream or other actions on this app. Unless you save the gif and give it to them, of course.
+          <dd class="faqa">View the source, <a href=//github.com/hdragomir/facetogif/>inspect the source</a>.
+
+          <dt class="faq">Why is there a delete button?
+          <dd class="faqa">To save your browser the touble of continuously rendering an image you don't want anymore.
+
+          <dt class="faq">This is slow!
+          <dd class="faqa">Because everything happens client side, out of anyone else's control, the app is only as fast as your machine. Sorry.
+
+          <dt class="faq">Face to GIF
+          <dd class="faqa">... was made by Horia Dragomir - UI Developer, Hungry and Foolish.
+            <form class="textish-form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top"> <input type="hidden" name="cmd" value="_s-xclick"> <input type="hidden" name="encrypted" value="-----BEGIN PKCS7-----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-----END PKCS7----- ">
+            <input type=submit border="0" name="submit" alt="PayPal - The safer, easier way to pay online!" value="Buy him a coffee?" class="linklike ui-text">
+            <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1"> </form>
+
+
+
+        </dl>
+        </div>
+      </div>
     </div>
+
     <div id="controls-template" class="controls">
-      <a class="ui-button download img" download=your-giffed-face.gif>download gif</a>
+      <a class="ui-button download img control" download=your-giffed-face.gif>download gif</a>
+      <a class="ui-button remove img control to-danger">x</a>
     </div>
   <script src=gif.js></script>
   <script src=app.js></script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    ga('create', 'UA-1745893-13', 'hdragomir.github.io');
+    ga('send', 'pageview');
+  </script>
   </body>
 </html>
