@@ -1,5 +1,5 @@
 (function () {
-  var video, button, canvas, ctx, interval;
+  var video, mainbutton, canvas, ctx, interval;
 
   function thisBrowserIsBad() {
     alert(facetogif.str.nope);
@@ -77,13 +77,13 @@
         facetogif.stream.stop();
         facetogif.stream = null;
         facetogif.video.removeAttribute('src');
-        button.innerText = facetogif.str.ASK_FOR_PERMISSION;
+        button.innerHTML = facetogif.str.ASK_FOR_PERMISSION;
         button.classList.remove('streaming');
       } else {
         track('streaming', 'request');
         getStream(function (stream) {
           track('streaming', 'start');
-          button.innerText = facetogif.str.STOP_STREAMING;
+          button.innerHTML = facetogif.str.STOP_STREAMING;
           button.classList.add('streaming');
           facetogif.video.src = window.URL.createObjectURL(stream);
           facetogif.stream = stream;
@@ -92,27 +92,27 @@
       button.classList.toggle('clicked');
     }, false);
 
-    button = document.getElementById('start-recording');
+    mainbutton = document.getElementById('start-recording');
     var pause = document.getElementById('pause-recording');
-    button.addEventListener('click', function (e) {
+    mainbutton.addEventListener('click', function (e) {
       if (recorder.state === recorder.states.RECORDING || recorder.state === recorder.states.PAUSED) {
-        button.classList.remove('recording');
-        pause.innerText = facetogif.str.PAUSE;
-        button.innerText = facetogif.str.COMPILING;
+        mainbutton.classList.remove('recording');
+        mainbutton.innerHTML = facetogif.str.COMPILING;
+        pause.innerHTML = facetogif.str.PAUSE;
         clearInterval(recorder.interval);
         facetogif.recIndicator.classList.remove('on');
-        button.disabled = true;
-        button.classList.add('processing');
-        button.parentNode.classList.add('busy');
+        mainbutton.disabled = true;
+        mainbutton.classList.add('processing');
+        mainbutton.parentNode.classList.add('busy');
         recorder.state = recorder.states.COMPILING;
         recorder.gif.on('finished', function (blob) {
           var img = document.createElement('img');
           img.src = URL.createObjectURL(blob);
           facetogif.displayGIF(img);
-          button.removeAttribute('disabled');
-          button.classList.remove('processing');
-          button.parentNode.classList.remove('busy');
-          button.innerText = facetogif.str.START_RECORDING;
+          mainbutton.removeAttribute('disabled');
+          mainbutton.classList.remove('processing');
+          mainbutton.parentNode.classList.remove('busy');
+          mainbutton.innerHTML = facetogif.str.START_RECORDING;
           recorder.state = recorder.states.FINISHED;
           track('generated-gif', 'created');
         });
@@ -127,11 +127,11 @@
         ctx = canvas.getContext('2d');
         recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
         recorder.state = recorder.states.BUSY;
-        countdown(button, function () {
+        countdown(mainbutton, function () {
           facetogif.recIndicator.classList.add('on');
-          button.classList.add('recording');
+          mainbutton.classList.add('recording');
           recorder.state = recorder.states.RECORDING;
-          button.innerText = facetogif.str.STOP_RECORDING;
+          mainbutton.innerHTML = facetogif.str.STOP_RECORDING;
           recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), facetogif.gifSettings.ms);
         });
       }
@@ -141,7 +141,7 @@
         track('recording', 'pause');
         clearInterval(recorder.interval);
         recorder.state = recorder.states.PAUSED;
-        pause.innerText = facetogif.str.RESUME;
+        pause.innerHTML = facetogif.str.RESUME;
         facetogif.recIndicator.classList.remove('on');
       } else if (recorder.state === recorder.states.PAUSED) {
         recorder.state = recorder.states.BUSY;
@@ -149,7 +149,7 @@
         countdown(pause, function () {
           facetogif.recIndicator.classList.add('on');
           recorder.state = recorder.states.RECORDING;
-          pause.innerText = facetogif.str.PAUSE;
+          pause.innerHTML = facetogif.str.PAUSE;
           recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), facetogif.gifSettings.ms);
         });
       }
