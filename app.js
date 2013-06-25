@@ -2,7 +2,7 @@
   var video, button, canvas, ctx, interval;
 
   function thisBrowserIsBad() {
-    console.log(facetogif.str.nope);
+    alert(facetogif.str.nope);
   }
 
   function getStream(callback, fail) {
