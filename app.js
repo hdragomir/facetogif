@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  var video, mainbutton, canvas, ctx, interval, frames = [];
+  var video, mainbutton, canvas;
 
   function thisBrowserIsBad() {
     alert(facetogif.str.nope);
@@ -120,20 +120,20 @@
         track('recording', 'finished');
         recorder.gif.render();
 
-        ctx = null;
+        recorder.ctx = null;
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
         track('recording', 'start');
         canvas.height = facetogif.gifSettings.h;
         canvas.width = facetogif.gifSettings.w;
-        ctx = canvas.getContext('2d');
         recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
         recorder.state = recorder.states.BUSY;
         recorder.frames = [];
+        recorder.ctx = canvas.getContext('2d');
         countdown(mainbutton, function () {
           facetogif.recIndicator.classList.add('on');
           mainbutton.classList.add('recording');
           mainbutton.innerHTML = facetogif.str.STOP_RECORDING;
-          recorder.start(ctx);
+          recorder.start();
         });
       }
     }, false);
@@ -150,7 +150,7 @@
           facetogif.recIndicator.classList.add('on');
           recorder.state = recorder.states.RECORDING;
           pause.innerHTML = facetogif.str.PAUSE;
-          recorder.start(ctx);
+          recorder.start();
         });
       }
     }, false);
@@ -162,6 +162,7 @@
     gif: null,
     interval: null,
     frames: [],
+    ctx: null,
     states: {
       IDLE: 0,
       RECORDING: 1,
@@ -170,9 +171,9 @@
       FINISHED: 4,
       BUSY: 5
     },
-    start: function (ctx) {
+    start: function () {
       recorder.state = recorder.states.RECORDING;
-      recorder.interval = setInterval(recorder_fn(ctx, recorder.gif, recorder.frames), facetogif.gifSettings.ms);
+      recorder.interval = setInterval(recorder_fn(recorder.ctx, recorder.gif, recorder.frames), facetogif.gifSettings.ms);
     },
     pause: function () {
       recorder.state = recorder.states.PAUSED;
@@ -184,11 +185,12 @@
     return function () {
       if (facetogif.video.src) {
         var w = facetogif.gifSettings.w,
-          h = facetogif.gifSettings.h, frame;
+          h = facetogif.gifSettings.h,
+          frame;
         ctx.drawImage(facetogif.video, 0,0, w,h);
-        frame = ctx.getImageData(0,0, w,h).data;
+        frame = ctx.getImageData(0,0, w,h);
         //frames.push(frame);
-        gif.addFrame(null, {delay: facetogif.gifSettings.ms, data: frame});
+        gif.addFrame(frame, {delay: facetogif.gifSettings.ms});
       } else {
         clearInterval(recorder.interval);
         facetogif.recIndicator.classList.remove('on');

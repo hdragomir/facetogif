@@ -2,3 +2,4 @@
 /*
 //@ sourceMappingURL=gif.worker.js.map
 */
+// gif.worker.js 0.1.2 - https://github.com/jnordberg/gif.js
