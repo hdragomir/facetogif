@@ -1,5 +1,6 @@
 (function () {
-  var video, mainbutton, canvas, ctx, interval;
+  "use strict";
+  var video, mainbutton, canvas, ctx, interval, frames = [];
 
   function thisBrowserIsBad() {
     alert(facetogif.str.nope);
@@ -99,7 +100,7 @@
         mainbutton.classList.remove('recording');
         mainbutton.innerHTML = facetogif.str.COMPILING;
         pause.innerHTML = facetogif.str.PAUSE;
-        clearInterval(recorder.interval);
+        recorder.pause();
         facetogif.recIndicator.classList.remove('on');
         mainbutton.disabled = true;
         mainbutton.classList.add('processing');
@@ -127,20 +128,19 @@
         ctx = canvas.getContext('2d');
         recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
         recorder.state = recorder.states.BUSY;
+        recorder.frames = [];
         countdown(mainbutton, function () {
           facetogif.recIndicator.classList.add('on');
           mainbutton.classList.add('recording');
-          recorder.state = recorder.states.RECORDING;
           mainbutton.innerHTML = facetogif.str.STOP_RECORDING;
-          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), facetogif.gifSettings.ms);
+          recorder.start(ctx);
         });
       }
     }, false);
     pause.addEventListener('click', function (e) {
       if (recorder.state === recorder.states.RECORDING) {
         track('recording', 'pause');
-        clearInterval(recorder.interval);
-        recorder.state = recorder.states.PAUSED;
+        recorder.pause();
         pause.innerHTML = facetogif.str.RESUME;
         facetogif.recIndicator.classList.remove('on');
       } else if (recorder.state === recorder.states.PAUSED) {
@@ -150,7 +150,7 @@
           facetogif.recIndicator.classList.add('on');
           recorder.state = recorder.states.RECORDING;
           pause.innerHTML = facetogif.str.PAUSE;
-          recorder.interval = setInterval(recorder_fn(ctx, recorder.gif), facetogif.gifSettings.ms);
+          recorder.start(ctx);
         });
       }
     }, false);
@@ -161,6 +161,7 @@
     state: 0,
     gif: null,
     interval: null,
+    frames: [],
     states: {
       IDLE: 0,
       RECORDING: 1,
@@ -168,14 +169,26 @@
       COMPILING: 3,
       FINISHED: 4,
       BUSY: 5
+    },
+    start: function (ctx) {
+      recorder.state = recorder.states.RECORDING;
+      recorder.interval = setInterval(recorder_fn(ctx, recorder.gif, recorder.frames), facetogif.gifSettings.ms);
+    },
+    pause: function () {
+      recorder.state = recorder.states.PAUSED;
+      clearInterval(recorder.interval);
     }
   };
 
-  function recorder_fn(ctx, gif) {
+  function recorder_fn(ctx, gif, frames) {
     return function () {
       if (facetogif.video.src) {
-        ctx.drawImage(facetogif.video, 0,0, facetogif.gifSettings.w,facetogif.gifSettings.h);
-        gif.addFrame(ctx, {delay: facetogif.gifSettings.ms, copy: true});
+        var w = facetogif.gifSettings.w,
+          h = facetogif.gifSettings.h, frame;
+        ctx.drawImage(facetogif.video, 0,0, w,h);
+        frame = ctx.getImageData(0,0, w,h).data;
+        frames.push(frame);
+        gif.addFrame(null, {delay: facetogif.gifSettings.ms, data: frame});
       } else {
         clearInterval(recorder.interval);
         facetogif.recIndicator.classList.remove('on');
@@ -185,7 +198,7 @@
   }
 
   function countdown(node, callback) {
-    var s = 3;
+    var s = 3, fn;
     fn = function () {
       node.innerHTML = s;
       s--;
