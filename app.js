@@ -187,7 +187,7 @@
           h = facetogif.gifSettings.h, frame;
         ctx.drawImage(facetogif.video, 0,0, w,h);
         frame = ctx.getImageData(0,0, w,h).data;
-        frames.push(frame);
+        //frames.push(frame);
         gif.addFrame(null, {delay: facetogif.gifSettings.ms, data: frame});
       } else {
         clearInterval(recorder.interval);
@@ -213,7 +213,7 @@
 
   function track() {
     if (typeof ga !== "undefined") {
-      ga.apply(ga, ['send', 'event'].concat(arguments));
+      ga.apply(ga, ['send', 'event'].concat([].slice.call(arguments)));
     }
   }
 
