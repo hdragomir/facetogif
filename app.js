@@ -30,6 +30,8 @@
       COMPILING: "\"it's compiling...\"",
       PAUSE: "▮▮",
       RESUME: "►",
+      UPLOADED: "uploaded",
+      UPLOADING: "uploading",
       nope: "This browser does not support getUserMedia yet.",
       rusure: "Are you sure?"
     },
@@ -41,6 +43,20 @@
       article.className = "generated-gif separate";
       img.className = "generated-img";
       facetogif.gifContainer.appendChild(article);
+    },
+
+    blobs: [],
+    imgur_client_id: '886730f5763b437',
+    upload: function (img, callback) {
+      var fd = new FormData,
+        xhr = new XMLHttpRequest();
+      fd.append('image', facetogif.blobs[img.dataset.blobindex]);
+      xhr.open("POST", "https://api.imgur.com/3/image.json");
+      xhr.onload = function () {
+        callback && callback(JSON.parse(xhr.response));
+      }
+      xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur_client_id);
+      xhr.send(fd);
     }
   };
 
@@ -69,6 +85,18 @@
         if (confirm(facetogif.str.rusure)) {
           container.parentNode.removeChild(container);
         }
+      } else if (e.target.classList.contains('upload')) {
+        e.preventDefault();
+        track('generated-gif', 'imgur');
+        e.target.classList.remove('upload');
+        e.target.classList.add('processing');
+        e.target.innerText = facetogif.str.UPLOADING;
+        facetogif.upload(container.querySelector('.generated-img'), function (json) {
+          e.target.innerText = facetogif.str.UPLOADED;
+          e.target.href = 'http://imgur.com/' + json.data.id;
+          e.target.classList.remove('processing');
+          e.target.classList.add('uploaded');
+        })
       }
     }, false);
 
@@ -113,6 +141,7 @@
         recorder.gif.on('finished', function (blob) {
           var img = document.createElement('img');
           img.src = URL.createObjectURL(blob);
+          img.dataset.blobindex = facetogif.blobs.push(blob) -1;
           facetogif.displayGIF(img);
           mainbutton.removeAttribute('disabled');
           mainbutton.classList.remove('processing');

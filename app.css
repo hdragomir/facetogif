@@ -149,11 +149,15 @@ canvas {
 }
 
 .request-stream.clicked.streaming {
-  background: hsla(0, 30%, 50%, 1);
+  background-color: hsla(0, 30%, 50%, 1);
 }
 
 .ui-button.to-danger:hover {
-  background: hsla(0, 30%, 50%, 1);
+  background-color: hsla(0, 30%, 50%, 1);
+}
+
+.ui-button.to-imgur:hover, .ui-button.to-imgur.uploaded {
+  background-color: hsla(83, 68%, 45%, 1);
 }
 
 .recording-toggle {
