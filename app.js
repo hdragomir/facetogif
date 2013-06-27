@@ -48,15 +48,24 @@
     blobs: [],
     imgur_client_id: '886730f5763b437',
     upload: function (img, callback) {
-      var fd = new FormData,
+      var blob = facetogif.blobs[img.dataset.blobindex],
+        fd,
+        xhr;
+      if (blob.size / 1024 > 2048) {
+        alert("Image is too big for imgur. Please use an optimizer");
+        return false;
+      } else {
+        fd = new FormData;
         xhr = new XMLHttpRequest();
-      fd.append('image', facetogif.blobs[img.dataset.blobindex]);
-      xhr.open("POST", "https://api.imgur.com/3/image.json");
-      xhr.onload = function () {
-        callback && callback(JSON.parse(xhr.response));
+        fd.append('image', blob);
+        xhr.open("POST", "https://api.imgur.com/3/image.json");
+        xhr.onload = function () {
+          callback && callback(JSON.parse(xhr.response));
+        }
+        xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur_client_id);
+        xhr.send(fd);
+        return true;
       }
-      xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur_client_id);
-      xhr.send(fd);
     }
   };
 
@@ -88,15 +97,19 @@
       } else if (e.target.classList.contains('upload')) {
         e.preventDefault();
         track('generated-gif', 'imgur');
-        e.target.classList.remove('upload');
-        e.target.classList.add('processing');
-        e.target.innerHTML = facetogif.str.UPLOADING;
-        facetogif.upload(container.querySelector('.generated-img'), function (json) {
+        if (facetogif.upload(container.querySelector('.generated-img'), function (json) {
           e.target.innerHTML = facetogif.str.UPLOADED;
           e.target.href = 'http://imgur.com/' + json.data.id;
           e.target.classList.remove('processing');
           e.target.classList.add('uploaded');
-        })
+        })) {
+          e.target.classList.remove('upload');
+          e.target.classList.add('processing');
+          e.target.innerHTML = facetogif.str.UPLOADING;
+        } else {
+          e.target.parentNode.removeChild(e.target);
+          track('generated-gif', 'toobig');
+        }
       }
     }, false);
 
