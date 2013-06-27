@@ -90,9 +90,9 @@
         track('generated-gif', 'imgur');
         e.target.classList.remove('upload');
         e.target.classList.add('processing');
-        e.target.innerText = facetogif.str.UPLOADING;
+        e.target.innerHTML = facetogif.str.UPLOADING;
         facetogif.upload(container.querySelector('.generated-img'), function (json) {
-          e.target.innerText = facetogif.str.UPLOADED;
+          e.target.innerHTML = facetogif.str.UPLOADED;
           e.target.href = 'http://imgur.com/' + json.data.id;
           e.target.classList.remove('processing');
           e.target.classList.add('uploaded');
