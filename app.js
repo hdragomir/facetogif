@@ -3,6 +3,7 @@
   var video, mainbutton, canvas;
 
   function thisBrowserIsBad() {
+    track('streaming', 'not supported');
     alert(facetogif.str.nope);
   }
 
@@ -88,7 +89,10 @@
           button.classList.add('streaming');
           facetogif.video.src = window.URL.createObjectURL(stream);
           facetogif.stream = stream;
-        }, function (fail) { console.log(fail); });
+        }, function (fail) {
+          track('streaming', 'failed');
+          console.log(fail);
+        });
       }
       button.classList.toggle('clicked');
     }, false);
