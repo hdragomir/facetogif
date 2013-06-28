@@ -88,7 +88,7 @@
         callback(blob);
       }
       w.postMessage({
-        imageDataList: frames,
+        imageDataList: frames.filter(function (e, i) { return !!i%3 }),
         width: facetogif.gifSettings.width,
         height: facetogif.gifSettings.height,
         paletteSize: 95,
@@ -124,6 +124,10 @@
         e.preventDefault();
         track('generated-gif', 'remove');
         if (confirm(facetogif.str.rusure)) {
+          var img = container.querySelector('.generated-img');
+          img.src = null;
+          facetogif.blobs[img.dataset.blobindex] = null;
+          facetogif.frames[img.dataset.framesindex] = null;
           container.parentNode.removeChild(container);
         }
       } else if (e.target.classList.contains('upload')) {
