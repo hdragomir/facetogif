@@ -46,26 +46,57 @@
     },
 
     blobs: [],
+    frames: [],
     imgur_client_id: '886730f5763b437',
-    upload: function (img, callback) {
-      var blob = facetogif.blobs[img.dataset.blobindex],
-        fd,
-        xhr;
-      if (blob.size / 1024 > 2048) {
-        alert("Image is too big for imgur. Please use an optimizer");
-        return false;
-      } else {
-        fd = new FormData;
+    do_up: function (blob, callback) {
+      var fd = new FormData(),
         xhr = new XMLHttpRequest();
-        fd.append('image', blob);
-        xhr.open("POST", "https://api.imgur.com/3/image.json");
-        xhr.onload = function () {
-          callback && callback(JSON.parse(xhr.response));
-        }
-        xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur_client_id);
-        xhr.send(fd);
-        return true;
+      fd.append('image', blob);
+      xhr.open("POST", "https://api.imgur.com/3/image.json");
+      xhr.onload = function () {
+        callback && callback(JSON.parse(xhr.response));
       }
+      xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur_client_id);
+      xhr.send(fd);
+    },
+    upload: function (opts) {
+      var blob = opts.blob || facetogif.blobs[opts.img.dataset.blobindex];
+      if (facetogif.is_blob_too_big(blob)) {
+        if (!opts.is_secod_pass) {
+          opts.onoptimize && opts.onoptimize();
+          opts.is_secod_pass = true;
+          facetogif.optimise(facetogif.frames[opts.img.dataset.framesindex], function (blob) {
+            opts.blob = blob;
+            facetogif.upload(opts);
+          });
+        } else {
+          opts.oncannotupload && opts.oncannotupload();
+        }
+      } else {
+        opts.oncanupload && opts.oncanupload();
+        facetogif.do_up(blob, opts.onuploaded);
+      }
+    },
+
+    // it's not really an optimization, rather a re-export with very low quality, using a different tool
+    optimise: function (frames, callback) {
+      //start with the second writer!
+      var w = facetogif.secondWorker || (facetogif.secondWorker = new Worker('gifwriter.worker.js'));
+      w.onmessage = function (e) {
+        var blob = new Blob([e.data.bytes], {type: 'image/gif'});
+        callback(blob);
+      }
+      w.postMessage({
+        imageDataList: frames,
+        width: facetogif.gifSettings.width,
+        height: facetogif.gifSettings.height,
+        paletteSize: 95,
+        delayTimeInMS: facetogif.gifSettings.ms
+      });
+    },
+
+    is_blob_too_big: function (blob, max) {
+      return blob.size > (max || (2048 * 1024));
     }
   };
 
@@ -97,19 +128,31 @@
       } else if (e.target.classList.contains('upload')) {
         e.preventDefault();
         track('generated-gif', 'imgur');
-        if (facetogif.upload(container.querySelector('.generated-img'), function (json) {
-          e.target.innerHTML = facetogif.str.UPLOADED;
-          e.target.href = 'http://imgur.com/' + json.data.id;
-          e.target.classList.remove('processing');
-          e.target.classList.add('uploaded');
-        })) {
-          e.target.classList.remove('upload');
-          e.target.classList.add('processing');
-          e.target.innerHTML = facetogif.str.UPLOADING;
-        } else {
-          e.target.parentNode.removeChild(e.target);
-          track('generated-gif', 'toobig');
-        }
+        facetogif.upload({
+          img: container.querySelector('.generated-img'),
+          onuploaded: function (json) {
+            e.target.innerHTML = facetogif.str.UPLOADED;
+            e.target.href = 'http://imgur.com/' + json.data.id;
+            e.target.classList.remove('processing');
+            e.target.classList.add('uploaded');
+            track('generated-gif', 'is on imgur.com');
+          },
+          oncanupload: function () {
+            e.target.classList.remove('upload');
+            e.target.classList.add('processing');
+            e.target.innerHTML = facetogif.str.UPLOADING;
+          },
+          oncannotupload: function () {
+            e.target.parentNode.removeChild(e.target);
+            alert('The gif is still too big for imgur. :-(');
+            track('generated-gif', 'toobig');
+          },
+          onoptimize: function () {
+            track('generated-gif', 'optimising');
+            e.target.classList.add('processing');
+            e.target.innerHTML = 'optimising';
+          }
+        });
       }
     }, false);
 
@@ -155,6 +198,7 @@
           var img = document.createElement('img');
           img.src = URL.createObjectURL(blob);
           img.dataset.blobindex = facetogif.blobs.push(blob) -1;
+          img.dataset.framesindex = facetogif.frames.push(recorder.frames) -1;
           facetogif.displayGIF(img);
           mainbutton.removeAttribute('disabled');
           mainbutton.classList.remove('processing');
@@ -235,7 +279,7 @@
           frame;
         ctx.drawImage(facetogif.video, 0,0, w,h);
         frame = ctx.getImageData(0,0, w,h);
-        //frames.push(frame);
+        frames.push(frame);
         gif.addFrame(frame, {delay: facetogif.gifSettings.ms});
       } else {
         clearInterval(recorder.interval);
