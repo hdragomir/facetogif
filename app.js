@@ -32,6 +32,7 @@
       RESUME: "►",
       UPLOADED: "uploaded",
       UPLOADING: "uploading",
+      OPTIMISING: "optimising",
       nope: "This browser does not support getUserMedia yet.",
       rusure: "Are you sure?"
     },
@@ -150,7 +151,7 @@
           onoptimize: function () {
             track('generated-gif', 'optimising');
             e.target.classList.add('processing');
-            e.target.innerHTML = 'optimising';
+            e.target.innerHTML = facetogif.str.OPTIMISING;
           }
         });
       }
