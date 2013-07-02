@@ -166,6 +166,7 @@ canvas {
 
 .generated-gif {
   position: relative;
+  text-align: center;
 }
 
 .generated-gif .controls {
@@ -214,6 +215,16 @@ canvas {
   height: 480px;
 }
 
+.square .generated-img {
+  width: 250px;
+  height: 250px;
+}
+
+.small .generated-img {
+  width: 200px;
+  height: 150px;
+}
+
 .textish-form {
   display: inline-block;
 }
@@ -227,7 +238,8 @@ canvas {
 
 .faqesq {
   background: white;
-  font-size: 1em/1.4;
+  font-size: 1em;
+  line-height: 1.4;
 }
 
 .faq {
@@ -241,3 +253,73 @@ canvas {
 .faqa + .faq {
   margin-top: 1.5em;
 }
+
+.size-setting {
+  display: inline-block;
+  background: hsla(0,0%, 50%, 1);
+  width: 1em;
+  height: 1em;
+  opacity: 0.5;
+  cursor: pointer;
+  position: relative;
+  z-index: 3;
+}
+
+.size-setting.small {
+  width: 1.5em;
+  height: 1em;
+}
+
+.size-setting.square {
+  width: 1.7em;
+  height: 1.7em;
+}
+
+.size-setting.normal {
+  width: 2em;
+  height: 1.5em;
+}
+.size-setting.full {
+  width: 3em;
+  height: 2.25em;
+}
+
+input[name="gif-size"] {
+  display: none;
+}
+input[name="gif-size"]:checked + .size-setting {
+  opacity: 1;
+}
+.size-setting:after {
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  background: transparent;
+  border: 0.1em solid white;
+  content: "";
+  display: block;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  left: 10%;
+  position: relative;
+}
+
+.gif-maker-size-controls {
+  opacity: 0;
+  transition: opacity 0.3s;
+  text-align: right;
+  padding-right: 0.8em;
+  padding-bottom: 0.6em;
+  margin-top: -3.2em;
+}
+
+video[src]:hover ~ .gif-maker-size-controls,
+.gif-maker-size-controls:hover {
+  opacity: 1;
+}
+
+video[data-state] ~ .gif-maker-size-controls{
+  display: none;
+}
+
+

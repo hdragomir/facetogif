@@ -1,6 +1,11 @@
 (function () {
   "use strict";
-  var video, mainbutton;
+  var mainbutton, gifSizes = {
+    small: [200, 150],
+    square: [250, 250],
+    normal: [320, 240],
+    full: [640, 480]
+  };
 
   function thisBrowserIsBad() {
     track('streaming', 'not supported');
@@ -15,9 +20,44 @@
     gifSettings: {
       w: 320,
       h: 240,
-      ms: 100
+      ms: 100,
+      preset: 'normal'
+    },
+    changeSize: function (presetName) {
+      var preset = gifSizes[presetName];
+      if (preset) {
+        facetogif.gifSettings.w = preset[0];
+        facetogif.gifSettings.h = preset[1];
+        facetogif.gifSettings.preset = presetName;
+        track('recording', 'changed-size', presetName);
+      } else {
+        console.log(presetName, 'not found');
+      }
+      return facetogif.gifSettings;
+    },
+    recorderFrame: function () {
+      var frame = {
+        x: 0, y: 0,
+        w: null, h: null
+      };
+      switch (facetogif.gifSettings.preset) {
+        case 'normal':
+        case 'full':
+        case 'small':
+          frame.w = facetogif.gifSettings.w;
+          frame.h = facetogif.gifSettings.h;
+          break;
+        case 'square':
+          frame.x = -35;
+          frame.w = 320;
+          frame.h = facetogif.gifSettings.h;
+          break;
+      }
+      return frame;
+
     },
     canvas: null,
+    video: null,
     initCanvas: function () {
       var c = facetogif.canvas;
       c.width = facetogif.gifSettings.w;
@@ -25,7 +65,6 @@
       return c;
     },
     stream: null,
-    video: null,
     gifContainer: null,
     controls: null,
     recIndicator: null,
@@ -48,7 +87,7 @@
       var article = document.createElement('article');
       article.appendChild(facetogif.controls.cloneNode(true));
       article.appendChild(img);
-      article.className = "generated-gif separate";
+      article.className = "generated-gif separate " + facetogif.gifSettings.preset;
       img.className = "generated-img";
       facetogif.gifContainer.appendChild(article);
     },
@@ -107,6 +146,84 @@
       return blob.size > (max || (2048 * 1024));
     }
   };
+  var recorder = {
+    state: 0,
+    gif: null,
+    interval: null,
+    frames: [],
+    ctx: null,
+    states: {
+      IDLE: 0,
+      RECORDING: 1,
+      PAUSED: 2,
+      COMPILING: 3,
+      FINISHED: 4,
+      BUSY: 5
+    },
+    setBusy: function () {
+      facetogif.video.dataset.state = recorder.state = recorder.states.BUSY;
+    },
+    setFinished: function () {
+      recorder.state = recorder.states.FINISHED;
+    },
+    start: function () {
+      facetogif.video.dataset.state = recorder.state = recorder.states.RECORDING;
+      recorder.interval = setInterval(recorder_fn(recorder.ctx, recorder.gif, recorder.frames), facetogif.gifSettings.ms);
+    },
+    pause: function () {
+      facetogif.video.dataset.state = recorder.state = recorder.states.PAUSED;
+      clearInterval(recorder.interval);
+    },
+    compile: function (callback) {
+      facetogif.video.dataset.state = recorder.state = recorder.states.COMPILING;
+      recorder.gif.on('finished', function (blob) {
+        recorder.setFinished();
+        callback(blob);
+        delete facetogif.video.dataset.state;
+      });
+      recorder.gif.render();
+    }
+
+  };
+
+  function recorder_fn(ctx, gif, frames) {
+    var coords = facetogif.recorderFrame(),
+      drawW = facetogif.gifSettings.w,
+      drawH = facetogif.gifSettings.h;
+    return function () {
+      if (facetogif.video.src) {
+        ctx.drawImage(facetogif.video, coords.x,coords.y, coords.w,coords.h);
+        var frame = ctx.getImageData(0,0, drawW,drawH);
+        frames.push(frame);
+        gif.addFrame(frame, {delay: facetogif.gifSettings.ms});
+      } else {
+        clearInterval(recorder.interval);
+        facetogif.recIndicator.classList.remove('on');
+        recorder.state = recorder.states.IDLE;
+      }
+    }
+  }
+
+  function countdown(node, callback) {
+    var s = 3, fn;
+    fn = function () {
+      node.innerHTML = s;
+      s--;
+      if (s < 0) {
+        callback();
+      } else {
+        setTimeout(fn, 1000);
+      }
+    }
+    fn();
+  }
+
+  function track() {
+    if (typeof ga !== "undefined") {
+      ga.apply(ga, ['send', 'event'].concat([].slice.call(arguments)));
+    }
+  }
+
 
   document.addEventListener('DOMContentLoaded', function (e) {
     facetogif.video = document.querySelector('video');
@@ -206,7 +323,7 @@
         mainbutton.classList.add('processing');
         mainbutton.parentNode.classList.add('busy');
         recorder.state = recorder.states.COMPILING;
-        recorder.gif.on('finished', function (blob) {
+        recorder.compile(function (blob) {
           var img = document.createElement('img');
           img.src = URL.createObjectURL(blob);
           img.dataset.blobindex = facetogif.blobs.push(blob) -1;
@@ -216,17 +333,13 @@
           mainbutton.classList.remove('processing');
           mainbutton.parentNode.classList.remove('busy');
           mainbutton.innerHTML = facetogif.str.START_RECORDING;
-          recorder.state = recorder.states.FINISHED;
           track('generated-gif', 'created');
         });
         track('recording', 'finished');
-        recorder.gif.render();
-
-        recorder.ctx = null;
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
         track('recording', 'start');
         recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
-        recorder.state = recorder.states.BUSY;
+        recorder.setBusy();
         recorder.frames = [];
         recorder.ctx = facetogif.initCanvas().getContext('2d');
         countdown(mainbutton, function () {
@@ -244,80 +357,23 @@
         pause.innerHTML = facetogif.str.RESUME;
         facetogif.recIndicator.classList.remove('on');
       } else if (recorder.state === recorder.states.PAUSED) {
-        recorder.state = recorder.states.BUSY;
+        recorder.setBusy();
         track('recording', 'resume');
         countdown(pause, function () {
           facetogif.recIndicator.classList.add('on');
-          recorder.state = recorder.states.RECORDING;
           pause.innerHTML = facetogif.str.PAUSE;
           recorder.start();
         });
       }
     }, false);
 
+    var sizeSettings = document.querySelector('.gif-maker-size-controls');
+    sizeSettings.addEventListener('change', function (ev) {
+      facetogif.changeSize(ev.target.value);
+    }, false);
+    sizeSettings.querySelector('[value=normal]').checked = true;
+
   }, false);
-
-  var recorder = {
-    state: 0,
-    gif: null,
-    interval: null,
-    frames: [],
-    ctx: null,
-    states: {
-      IDLE: 0,
-      RECORDING: 1,
-      PAUSED: 2,
-      COMPILING: 3,
-      FINISHED: 4,
-      BUSY: 5
-    },
-    start: function () {
-      recorder.state = recorder.states.RECORDING;
-      recorder.interval = setInterval(recorder_fn(recorder.ctx, recorder.gif, recorder.frames), facetogif.gifSettings.ms);
-    },
-    pause: function () {
-      recorder.state = recorder.states.PAUSED;
-      clearInterval(recorder.interval);
-    }
-  };
-
-  function recorder_fn(ctx, gif, frames) {
-    return function () {
-      if (facetogif.video.src) {
-        var w = facetogif.gifSettings.w,
-          h = facetogif.gifSettings.h,
-          frame;
-        ctx.drawImage(facetogif.video, 0,0, w,h);
-        frame = ctx.getImageData(0,0, w,h);
-        frames.push(frame);
-        gif.addFrame(frame, {delay: facetogif.gifSettings.ms});
-      } else {
-        clearInterval(recorder.interval);
-        facetogif.recIndicator.classList.remove('on');
-        recorder.state = recorder.states.IDLE;
-      }
-    }
-  }
-
-  function countdown(node, callback) {
-    var s = 3, fn;
-    fn = function () {
-      node.innerHTML = s;
-      s--;
-      if (s < 0) {
-        callback();
-      } else {
-        setTimeout(fn, 1000);
-      }
-    }
-    fn();
-  }
-
-  function track() {
-    if (typeof ga !== "undefined") {
-      ga.apply(ga, ['send', 'event'].concat([].slice.call(arguments)));
-    }
-  }
 
 
 } ());
