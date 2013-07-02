@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  var video, mainbutton, canvas;
+  var video, mainbutton;
 
   function thisBrowserIsBad() {
     track('streaming', 'not supported');
@@ -16,6 +16,13 @@
       w: 320,
       h: 240,
       ms: 100
+    },
+    canvas: null,
+    initCanvas: function () {
+      var c = facetogif.canvas;
+      c.width = facetogif.gifSettings.w;
+      c.height = facetogif.gifSettings.h;
+      return c;
     },
     stream: null,
     video: null,
@@ -109,7 +116,7 @@
 
     facetogif.recIndicator = document.getElementById('recording-indicator');
 
-    canvas = document.querySelector('canvas');
+    facetogif.canvas = document.createElement('canvas');
     facetogif.gifContainer = document.getElementById('gifs-go-here');
 
     facetogif.gifContainer.addEventListener('click', function (e) {
@@ -218,12 +225,10 @@
         recorder.ctx = null;
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
         track('recording', 'start');
-        canvas.height = facetogif.gifSettings.h;
-        canvas.width = facetogif.gifSettings.w;
         recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
         recorder.state = recorder.states.BUSY;
         recorder.frames = [];
-        recorder.ctx = canvas.getContext('2d');
+        recorder.ctx = facetogif.initCanvas().getContext('2d');
         countdown(mainbutton, function () {
           facetogif.recIndicator.classList.add('on');
           mainbutton.classList.add('recording');
