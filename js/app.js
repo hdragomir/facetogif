@@ -128,7 +128,7 @@
     // it's not really an optimization, rather a re-export with very low quality, using a different tool
     optimise: function (frames, callback) {
       //start with the second writer!
-      var w = facetogif.secondWorker || (facetogif.secondWorker = new Worker('gifwriter.worker.js'));
+      var w = facetogif.secondWorker || (facetogif.secondWorker = new Worker('js/vendor/gifwriter.worker.js'));
       w.onmessage = function (e) {
         var blob = new Blob([e.data.bytes], {type: 'image/gif'});
         callback(blob);
@@ -338,7 +338,13 @@
         track('recording', 'finished');
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
         track('recording', 'start');
-        recorder.gif = new GIF({ workers: 2, width: facetogif.gifSettings.w, height: facetogif.gifSettings.h, quality: 20 });
+        recorder.gif = new GIF({
+          workers: 2,
+          width: facetogif.gifSettings.w,
+          height: facetogif.gifSettings.h,
+          quality: 20,
+          workerScript: 'js/vendor/gif.worker.js'
+        });
         recorder.setBusy();
         recorder.frames = [];
         recorder.ctx = facetogif.initCanvas().getContext('2d');
