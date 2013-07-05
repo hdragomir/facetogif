@@ -314,7 +314,7 @@ input[name="gif-size"]:checked + .size-setting {
 }
 
 video[src]:hover ~ .gif-maker-size-controls,
-.gif-maker-size-controls:hover {
+video[src] ~ .gif-maker-size-controls:hover {
   opacity: 1;
 }
 
