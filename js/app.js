@@ -6,6 +6,8 @@
     normal: [320, 240],
     full: [640, 480]
   };
+  var autosnapshot = 5;// n || false
+  var count_down = 3;
 
   function thisBrowserIsBad() {
     track('streaming', 'not supported');
@@ -169,6 +171,11 @@
     start: function () {
       facetogif.video.dataset.state = recorder.state = recorder.states.RECORDING;
       recorder.interval = setInterval(recorder_fn(recorder.ctx, recorder.gif, recorder.frames), facetogif.gifSettings.ms);
+      if(autosnapshot){
+        countdown(autosnapshot, mainbutton, function () {
+          mainbutton.click();
+        });
+      }
     },
     pause: function () {
       facetogif.video.dataset.state = recorder.state = recorder.states.PAUSED;
@@ -204,8 +211,8 @@
     }
   }
 
-  function countdown(node, callback) {
-    var s = 3, fn;
+  function countdown(s, node, callback) {
+    var fn;
     fn = function () {
       node.innerHTML = s;
       s--;
@@ -348,7 +355,7 @@
         recorder.setBusy();
         recorder.frames = [];
         recorder.ctx = facetogif.initCanvas().getContext('2d');
-        countdown(mainbutton, function () {
+        countdown(count_down, mainbutton, function () {
           facetogif.recIndicator.classList.add('on');
           mainbutton.classList.add('recording');
           mainbutton.innerHTML = facetogif.str.STOP_RECORDING;
@@ -365,7 +372,7 @@
       } else if (recorder.state === recorder.states.PAUSED) {
         recorder.setBusy();
         track('recording', 'resume');
-        countdown(pause, function () {
+        countdown(count_down, pause, function () {
           facetogif.recIndicator.classList.add('on');
           pause.innerHTML = facetogif.str.PAUSE;
           recorder.start();
