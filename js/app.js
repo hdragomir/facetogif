@@ -190,6 +190,8 @@
     var coords = facetogif.recorderFrame(),
       drawW = facetogif.gifSettings.w,
       drawH = facetogif.gifSettings.h;
+      ctx.translate(coords.w, 0);
+      ctx.scale(-1, 1);
     return function () {
       if (facetogif.video.src) {
         ctx.drawImage(facetogif.video, coords.x,coords.y, coords.w,coords.h);
