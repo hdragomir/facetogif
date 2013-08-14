@@ -16,6 +16,11 @@ a, .linklike {
   position: relative;
 }
 
+video {
+  -webkit-transform: scaleX(-1);
+  transform: scaleX(-1);
+}
+
 video ~ .gif-maker-controls {
   opacity: 0;
   transition: opacity 0.2s, visibility 0s 0.2s;
