@@ -5,7 +5,8 @@
     square: [250, 250],
     normal: [320, 240],
     full: [640, 480]
-  };
+  },
+  currentVideoPreset = "640480";
 
   function thisBrowserIsBad() {
     track('streaming', 'not supported');
@@ -14,6 +15,19 @@
 
   function getStream(callback, fail) {
     (navigator.getUserMedia || navigator.mozGetUserMedia || navigator.webkitGetUserMedia || thisBrowserIsBad).call(navigator, {video: true}, callback, fail);
+  }
+
+  function onResize() {
+    var preset = gifSizes.full, presetstring;
+    if (document.documentElement.clientWidth < 640) {
+      preset = gifSizes.normal;
+    }
+    presetstring = preset.join('');
+    if (currentVideoPreset != presetstring) {
+      currentVideoPreset = presetstring;
+      facetogif.video.width = preset[0];
+      facetogif.video.height = preset[1];
+    }
   }
 
   var facetogif = {
@@ -74,7 +88,7 @@
       START_RECORDING: "start recording",
       STOP_RECORDING: "make gif",
       COMPILING: "\"it's compiling...\"",
-      PAUSE: "▮▮",
+      PAUSE: "||",
       RESUME: "►",
       UPLOADED: "uploaded",
       UPLOADING: "uploading",
@@ -379,7 +393,16 @@
     }, false);
     sizeSettings.querySelector('[value=normal]').checked = true;
 
+    onResize();
+    var on_resize_throttle;
+    window.addEventListener('resize', function () {
+      clearTimeout(on_resize_throttle);
+      on_resize_throttle = setTimeout(onResize, 400);
+    }, false);
+
   }, false);
+
+
 
 
 } ());

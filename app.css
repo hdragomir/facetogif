@@ -10,10 +10,12 @@ a, .linklike {
 }
 
 .container {
-  width: 40em;
+  max-width: 40em;
+  width: 100%;
   margin: 1em auto;
   position: relative;
 }
+
 video ~ .gif-maker-controls {
   opacity: 0;
   transition: opacity 0.2s, visibility 0s 0.2s;
@@ -322,4 +324,41 @@ video[data-state] ~ .gif-maker-size-controls{
   display: none;
 }
 
+@media screen and (max-width: 720px) {
+  body {
+    margin: 0;
+  }
 
+  video {
+    width: 100%;
+  }
+
+  video[src] ~ .gif-maker-size-controls {
+    display: none;
+  }
+
+  .generated-img {
+    width: 100%;
+    height: auto;
+  }
+
+  .separate {
+    margin-left: 0;
+    margin-right: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .faqesq {
+    padding: 0.5em;
+  }
+
+  .recording-indicator {
+    right: 2em;
+  }
+
+  .ui-button.to-imgur {
+    margin: auto 0.5em;
+  }
+
+}
