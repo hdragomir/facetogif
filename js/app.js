@@ -326,6 +326,8 @@
           facetogif.video.src = window.URL.createObjectURL(stream);
           facetogif.initSize();
           facetogif.stream = stream;
+          // mobile hidden video hack
+          setTimeout(onResize, 2000);
           button.classList.toggle('clicked');
         }, function (fail) {
           track('streaming', 'failed');
