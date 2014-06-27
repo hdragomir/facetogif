@@ -17,8 +17,11 @@ a, .linklike {
 }
 
 video {
-  -webkit-transform: scaleX(-1);
-  transform: scaleX(-1);
+  -webkit-transform: translate(200%, 0%) scale(-2, 2);
+  transform: translate(200%, 0%) scale(-2, 2);
+  -webkit-transform-origin: 0 0;
+  transform-origin: 0 0;
+  margin-bottom: 230px;
 }
 
 video ~ .gif-maker-controls {
@@ -56,7 +59,7 @@ video[src] ~ .gif-maker-controls,
 }
 
 canvas {
-  display: none;
+  /*display: none;*/
 }
 
 .ui-button {
@@ -218,7 +221,7 @@ canvas {
 }
 
 .generated-img {
-  width: 640px;
+  width: auto;
   height: 480px;
 }
 
@@ -261,73 +264,7 @@ canvas {
   margin-top: 1.5em;
 }
 
-.size-setting {
-  display: inline-block;
-  background: hsla(0,0%, 50%, 1);
-  width: 1em;
-  height: 1em;
-  opacity: 0.5;
-  cursor: pointer;
-  position: relative;
-  z-index: 3;
-}
 
-.size-setting.small {
-  width: 1.5em;
-  height: 1em;
-}
-
-.size-setting.square {
-  width: 1.7em;
-  height: 1.7em;
-}
-
-.size-setting.normal {
-  width: 2em;
-  height: 1.5em;
-}
-.size-setting.full {
-  width: 3em;
-  height: 2.25em;
-}
-
-input[name="gif-size"] {
-  display: none;
-}
-input[name="gif-size"]:checked + .size-setting {
-  opacity: 1;
-}
-.size-setting:after {
-  box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  background: transparent;
-  border: 0.1em solid white;
-  content: "";
-  display: block;
-  width: 80%;
-  height: 80%;
-  top: 10%;
-  left: 10%;
-  position: relative;
-}
-
-.gif-maker-size-controls {
-  opacity: 0;
-  transition: opacity 0.3s;
-  text-align: right;
-  padding-right: 0.8em;
-  padding-bottom: 0.6em;
-  margin-top: -3.2em;
-}
-
-video[src]:hover ~ .gif-maker-size-controls,
-video[src] ~ .gif-maker-size-controls:hover {
-  opacity: 1;
-}
-
-video[data-state] ~ .gif-maker-size-controls{
-  display: none;
-}
 
 @media screen and (max-width: 720px) {
   body {
@@ -336,15 +273,17 @@ video[data-state] ~ .gif-maker-size-controls{
 
   video {
     width: 100%;
-  }
-
-  video[src] ~ .gif-maker-size-controls {
-    display: none;
+    -webkit-transform: scaleX(-1);
+    transform: scaleX(-1);
+    -webkit-transform-origin: 50% 50%;
+    transform-origin: 50% 50%;
+    margin-bottom: auto;
   }
 
   .generated-img {
     width: 100%;
     height: auto;
+    display: block;
   }
 
   .separate {
@@ -364,6 +303,10 @@ video[data-state] ~ .gif-maker-size-controls{
 
   .ui-button.to-imgur {
     margin: auto 0.5em;
+  }
+
+  .generated-gif .controls {
+    opacity: 1;
   }
 
 }

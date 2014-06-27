@@ -1,12 +1,6 @@
 (function () {
   "use strict";
-  var mainbutton, gifSizes = {
-    small: [200, 150],
-    square: [250, 250],
-    normal: [320, 240],
-    full: [640, 480]
-  },
-  currentVideoPreset = "640480";
+  var mainbutton, pause, preset = [320, 240];
 
   function thisBrowserIsBad() {
     track('streaming', 'not supported');
@@ -18,55 +12,40 @@
   }
 
   function onResize() {
-    var preset = gifSizes.full, presetstring;
-    if (document.documentElement.clientWidth < 640) {
-      preset = gifSizes.normal;
-    }
-    presetstring = preset.join('');
-    if (currentVideoPreset != presetstring) {
-      currentVideoPreset = presetstring;
-      facetogif.video.width = preset[0];
-      facetogif.video.height = preset[1];
-    }
+    var frame = calcVideoSize(facetogif.video);
+    facetogif.video.width = frame[0];
+    facetogif.video.height = frame[1];
+    facetogif.initSize();
+  }
+
+  function calcVideoSize(video) {
+    var frame = [];
+    var vw = video.videoWidth;
+    var vh = video.videoHeight;
+    var ratio = (vw > preset[0] || vh > preset[1]) ? (vw > vh ? preset[0] / vw : preset[1] / vh) : 1;
+    frame[0] = vw * ratio;
+    frame[1] = vh * ratio;
+    return frame;
   }
 
   var facetogif = {
     gifSettings: {
       w: 320,
       h: 240,
-      ms: 100,
-      preset: 'normal'
+      ms: 100
     },
-    changeSize: function (presetName) {
-      var preset = gifSizes[presetName];
-      if (preset) {
-        facetogif.gifSettings.w = preset[0];
-        facetogif.gifSettings.h = preset[1];
-        facetogif.gifSettings.preset = presetName;
-        track('recording', 'changed-size', presetName);
-      } else {
-        console.log(presetName, 'not found');
-      }
+    initSize: function () {
+      var preset = calcVideoSize(facetogif.video);
+      facetogif.gifSettings.w = preset[0];
+      facetogif.gifSettings.h = preset[1];
       return facetogif.gifSettings;
     },
     recorderFrame: function () {
       var frame = {
         x: 0, y: 0,
-        w: null, h: null
+        w: facetogif.gifSettings.w,
+        h: facetogif.gifSettings.h
       };
-      switch (facetogif.gifSettings.preset) {
-        case 'normal':
-        case 'full':
-        case 'small':
-          frame.w = facetogif.gifSettings.w;
-          frame.h = facetogif.gifSettings.h;
-          break;
-        case 'square':
-          frame.x = -35;
-          frame.w = 320;
-          frame.h = facetogif.gifSettings.h;
-          break;
-      }
       return frame;
 
     },
@@ -74,8 +53,9 @@
     video: null,
     initCanvas: function () {
       var c = facetogif.canvas;
-      c.width = facetogif.gifSettings.w;
-      c.height = facetogif.gifSettings.h;
+      var frame = facetogif.recorderFrame();
+      c.width = frame.w;
+      c.height = frame.h;
       return c;
     },
     stream: null,
@@ -189,13 +169,15 @@
       clearInterval(recorder.interval);
     },
     compile: function (callback) {
-      facetogif.video.dataset.state = recorder.state = recorder.states.COMPILING;
-      recorder.gif.on('finished', function (blob) {
-        recorder.setFinished();
-        callback(blob);
-        delete facetogif.video.dataset.state;
-      });
-      recorder.gif.render();
+      if (recorder.state !== recorder.states.BUSY) {
+        facetogif.video.dataset.state = recorder.state = recorder.states.COMPILING;
+        recorder.gif.on('finished', function (blob) {
+          recorder.setFinished();
+          callback(blob);
+          delete facetogif.video.dataset.state;
+        });
+        recorder.gif.render();
+      }
     }
 
   };
@@ -206,10 +188,11 @@
       drawH = facetogif.gifSettings.h;
       ctx.translate(coords.w, 0);
       ctx.scale(-1, 1);
+
     return function () {
       if (facetogif.video.src) {
-        ctx.drawImage(facetogif.video, coords.x,coords.y, coords.w,coords.h);
-        var frame = ctx.getImageData(0,0, drawW,drawH);
+        ctx.drawImage(facetogif.video, 0,0, facetogif.video.width, facetogif.video.height);
+        var frame = ctx.getImageData(0,0, coords.w,coords.h);
         frames.push(frame);
         gif.addFrame(frame, {delay: facetogif.gifSettings.ms});
       } else {
@@ -240,6 +223,30 @@
     }
   }
 
+    function compile_gif(e) {
+        mainbutton.classList.remove('recording');
+        mainbutton.innerHTML = facetogif.str.COMPILING;
+        pause.innerHTML = facetogif.str.PAUSE;
+        recorder.pause();
+        facetogif.recIndicator.classList.remove('on');
+        mainbutton.disabled = true;
+        mainbutton.classList.add('processing');
+        mainbutton.parentNode.classList.add('busy');
+        recorder.state = recorder.states.COMPILING;
+        recorder.compile(function (blob) {
+          var img = document.createElement('img');
+          img.src = URL.createObjectURL(blob);
+          img.dataset.blobindex = facetogif.blobs.push(blob) -1;
+          img.dataset.framesindex = facetogif.frames.push(recorder.frames) -1;
+          facetogif.displayGIF(img);
+          mainbutton.removeAttribute('disabled');
+          mainbutton.classList.remove('processing');
+          mainbutton.parentNode.classList.remove('busy');
+          mainbutton.innerHTML = facetogif.str.START_RECORDING;
+          track('generated-gif', 'created');
+        });
+        track('recording', 'finished');
+    }
 
   document.addEventListener('DOMContentLoaded', function (e) {
     facetogif.video = document.querySelector('video');
@@ -248,7 +255,6 @@
     facetogif.controls.removeAttribute('id');
 
     facetogif.recIndicator = document.getElementById('recording-indicator');
-
     facetogif.canvas = document.createElement('canvas');
     facetogif.gifContainer = document.getElementById('gifs-go-here');
 
@@ -301,9 +307,10 @@
       }
     }, false);
 
+
     document.getElementById('put-your-face-here').addEventListener('click', function (e) {
       var button = e.target;
-      if (button.classList.contains('clicked') && facetogif.stream) {
+      if (facetogif.stream) {
         track('streaming', 'stop');
         facetogif.stream.stop();
         facetogif.stream = null;
@@ -317,41 +324,22 @@
           button.innerHTML = facetogif.str.STOP_STREAMING;
           button.classList.add('streaming');
           facetogif.video.src = window.URL.createObjectURL(stream);
+          facetogif.initSize();
           facetogif.stream = stream;
+          button.classList.toggle('clicked');
         }, function (fail) {
           track('streaming', 'failed');
           console.log(fail);
         });
       }
-      button.classList.toggle('clicked');
     }, false);
 
+
     mainbutton = document.getElementById('start-recording');
-    var pause = document.getElementById('pause-recording');
+    pause = document.getElementById('pause-recording');
     mainbutton.addEventListener('click', function (e) {
       if (recorder.state === recorder.states.RECORDING || recorder.state === recorder.states.PAUSED) {
-        mainbutton.classList.remove('recording');
-        mainbutton.innerHTML = facetogif.str.COMPILING;
-        pause.innerHTML = facetogif.str.PAUSE;
-        recorder.pause();
-        facetogif.recIndicator.classList.remove('on');
-        mainbutton.disabled = true;
-        mainbutton.classList.add('processing');
-        mainbutton.parentNode.classList.add('busy');
-        recorder.state = recorder.states.COMPILING;
-        recorder.compile(function (blob) {
-          var img = document.createElement('img');
-          img.src = URL.createObjectURL(blob);
-          img.dataset.blobindex = facetogif.blobs.push(blob) -1;
-          img.dataset.framesindex = facetogif.frames.push(recorder.frames) -1;
-          facetogif.displayGIF(img);
-          mainbutton.removeAttribute('disabled');
-          mainbutton.classList.remove('processing');
-          mainbutton.parentNode.classList.remove('busy');
-          mainbutton.innerHTML = facetogif.str.START_RECORDING;
-          track('generated-gif', 'created');
-        });
-        track('recording', 'finished');
+        compile_gif(e);
       } else if (recorder.state === recorder.states.IDLE || recorder.state === recorder.states.FINISHED) {
         track('recording', 'start');
         recorder.gif = new GIF({
@@ -389,12 +377,6 @@
       }
     }, false);
 
-    var sizeSettings = document.querySelector('.gif-maker-size-controls');
-    sizeSettings.addEventListener('change', function (ev) {
-      facetogif.changeSize(ev.target.value);
-    }, false);
-    sizeSettings.querySelector('[value=normal]').checked = true;
-
     onResize();
     var on_resize_throttle;
     window.addEventListener('resize', function () {
@@ -405,6 +387,6 @@
   }, false);
 
 
-
+  window.facetogif = facetogif;
 
 } ());
