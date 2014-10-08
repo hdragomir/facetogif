@@ -2,6 +2,11 @@
   "use strict";
   var mainbutton, pause, preset = [320, 240];
 
+  function getParentByClass(e, className) {
+    while (e.parentNode && !e.classList.contains(className) && (e = e.parentNode)) ;
+    return e;
+  }
+
   function thisBrowserIsBad() {
     track('streaming', 'not supported');
     alert(facetogif.str.nope);
@@ -88,17 +93,40 @@
 
     blobs: [],
     frames: [],
-    imgur_client_id: '886730f5763b437',
-    do_up: function (blob, callback) {
-      var fd = new FormData(),
-        xhr = new XMLHttpRequest();
-      fd.append('image', blob);
-      xhr.open("POST", "https://api.imgur.com/3/image.json");
-      xhr.onload = function () {
-        callback && callback(JSON.parse(xhr.response));
-      }
-      xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur_client_id);
-      xhr.send(fd);
+    imgur: {
+      history: JSON.parse(localStorage.facetogif_imgur_history || "[]"),
+      upload: function (blob, callback) {
+        var fd = new FormData(),
+         xhr = new XMLHttpRequest();
+        fd.append('image', blob);
+        xhr.open("POST", "https://api.imgur.com/3/image.json");
+        xhr.onload = function () {
+          callback && callback(JSON.parse(xhr.response));
+        };
+        xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur.client_id);
+        xhr.send(fd);
+      },
+      saveHistory: function () {
+        localStorage.facetogif_imgur_history = JSON.stringify(facetogif.imgur.history);
+      },
+      add: function (json) {
+        facetogif.imgur.history.push({i: json.data.id, x: json.data.deletehash});
+        facetogif.imgur.saveHistory();
+      },
+      remove: function (hash, callback) {
+        facetogif.imgur.history = facetogif.imgur.history.filter(function (el) {
+          return el.x != hash;
+        });
+        var xhr = new XMLHttpRequest()
+        xhr.open("DELETE", "https://api.imgur.com/3/image/" + hash);
+        xhr.onload = function () {
+          facetogif.imgur.saveHistory();
+          callback && callback(JSON.parse(xhr.response));
+        };
+        xhr.setRequestHeader('Authorization', 'Client-ID ' + facetogif.imgur.client_id);
+        xhr.send();
+      },
+      client_id: '886730f5763b437'
     },
     upload: function (opts) {
       var blob = opts.blob || facetogif.blobs[opts.img.dataset.blobindex];
@@ -115,7 +143,7 @@
         }
       } else {
         opts.oncanupload && opts.oncanupload();
-        facetogif.do_up(blob, opts.onuploaded);
+        facetogif.imgur.upload(blob, opts.onuploaded);
       }
     },
 
@@ -223,30 +251,30 @@
     }
   }
 
-    function compile_gif(e) {
-        mainbutton.classList.remove('recording');
-        mainbutton.innerHTML = facetogif.str.COMPILING;
-        pause.innerHTML = facetogif.str.PAUSE;
-        recorder.pause();
-        facetogif.recIndicator.classList.remove('on');
-        mainbutton.disabled = true;
-        mainbutton.classList.add('processing');
-        mainbutton.parentNode.classList.add('busy');
-        recorder.state = recorder.states.COMPILING;
-        recorder.compile(function (blob) {
-          var img = document.createElement('img');
-          img.src = URL.createObjectURL(blob);
-          img.dataset.blobindex = facetogif.blobs.push(blob) -1;
-          img.dataset.framesindex = facetogif.frames.push(recorder.frames) -1;
-          facetogif.displayGIF(img);
-          mainbutton.removeAttribute('disabled');
-          mainbutton.classList.remove('processing');
-          mainbutton.parentNode.classList.remove('busy');
-          mainbutton.innerHTML = facetogif.str.START_RECORDING;
-          track('generated-gif', 'created');
-        });
-        track('recording', 'finished');
-    }
+  function compile_gif(e) {
+      mainbutton.classList.remove('recording');
+      mainbutton.innerHTML = facetogif.str.COMPILING;
+      pause.innerHTML = facetogif.str.PAUSE;
+      recorder.pause();
+      facetogif.recIndicator.classList.remove('on');
+      mainbutton.disabled = true;
+      mainbutton.classList.add('processing');
+      mainbutton.parentNode.classList.add('busy');
+      recorder.state = recorder.states.COMPILING;
+      recorder.compile(function (blob) {
+        var img = document.createElement('img');
+        img.src = URL.createObjectURL(blob);
+        img.dataset.blobindex = facetogif.blobs.push(blob) -1;
+        img.dataset.framesindex = facetogif.frames.push(recorder.frames) -1;
+        facetogif.displayGIF(img);
+        mainbutton.removeAttribute('disabled');
+        mainbutton.classList.remove('processing');
+        mainbutton.parentNode.classList.remove('busy');
+        mainbutton.innerHTML = facetogif.str.START_RECORDING;
+        track('generated-gif', 'created');
+      });
+      track('recording', 'finished');
+  }
 
   document.addEventListener('DOMContentLoaded', function (e) {
     facetogif.video = document.querySelector('video');
@@ -259,10 +287,7 @@
     facetogif.gifContainer = document.getElementById('gifs-go-here');
 
     facetogif.gifContainer.addEventListener('click', function (e) {
-      var container = (function (e) {
-        while (e.parentNode && !e.classList.contains('generated-gif') && (e = e.parentNode)) ;
-        return e;
-      } (e.target));
+      var container = getParentByClass(e.target, 'generated-gif');
       if (e.target.classList.contains('download')) {
         track('generated-gif', 'download');
         e.target.href = container.querySelector('.generated-img').src;
@@ -287,6 +312,7 @@
             e.target.classList.remove('processing');
             e.target.classList.add('uploaded');
             track('generated-gif', 'is on imgur.com');
+            facetogif.imgur.add(json);
           },
           oncanupload: function () {
             e.target.classList.remove('upload');
@@ -384,6 +410,35 @@
     window.addEventListener('resize', function () {
       clearTimeout(on_resize_throttle);
       on_resize_throttle = setTimeout(onResize, 400);
+    }, false);
+
+    var imgurHistoryContainer = document.getElementById('imgur-history-container');
+    var imgurHistoryEntryTemplate = document.getElementById('imgur-history-entry-template');
+    imgurHistoryEntryTemplate.parentNode.removeChild(imgurHistoryEntryTemplate);
+    imgurHistoryEntryTemplate.removeAttribute('id');
+    if (!facetogif.imgur.history.length) {
+      imgurHistoryContainer.style.display = 'none';
+    } else {
+      facetogif.imgur.history.forEach(function (entry) {
+        var entryNode = imgurHistoryEntryTemplate.cloneNode(true);
+        [].forEach.call(entryNode.getElementsByTagName('a'), function (el) {
+          el.href += this.i;
+        }, entry);
+        entryNode.querySelector('.remove').dataset.deleteHash = entry.x;
+        entryNode.querySelector('img.generated-image').src = "https://i.imgur.com/" + entry.i + '.gif';
+        this.appendChild(entryNode);
+      }, imgurHistoryContainer.getElementsByClassName('imgur-history')[0]);
+    }
+
+    imgurHistoryContainer.addEventListener('click', function (ev) {
+      if (ev.target.classList.contains('remove') && confirm(facetogif.str.rusure)) {
+        var container = getParentByClass(ev.target, 'generated-gif');
+        facetogif.imgur.remove(ev.target.dataset.deleteHash, function (response) {
+          container.parentNode.removeChild(container);
+        });
+        ev.preventDefault();
+        return false;
+      }
     }, false);
 
   }, false);

@@ -58,8 +58,8 @@ video[src] ~ .gif-maker-controls,
   display: block;
 }
 
-canvas {
-  /*display: none;*/
+.no-show {
+  display: none;
 }
 
 .ui-button {
@@ -76,6 +76,7 @@ canvas {
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
+  text-align: center;
 }
 
 .ui-button:hover {
@@ -265,6 +266,17 @@ canvas {
 }
 
 
+.imgur-history {
+  display: none;
+}
+
+.imgur-history .generated-gif {
+  margin-top: 2em;
+}
+
+.visual-toggle:checked ~ .toggled {
+  display: inherit;
+}
 
 @media screen and (max-width: 720px) {
   body {

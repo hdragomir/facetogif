@@ -17,6 +17,10 @@
         <button class="ui-button pause-recording recording-toggle" id=pause-recording>||</button>
       </div>
       <output id=gifs-go-here></output>
+      <div class="imgur-history-container separate" id=imgur-history-container>
+        <input type=checkbox id=show-imgur-history-toggle class="no-show visual-toggle" ><label for=show-imgur-history-toggle class="ui-button to-imgur" >imgur history</label>
+        <div class="imgur-history toggled"></div>
+      </div>
       <div id=faq class="faq-container separate">
         <dl class="faqesq">
 
@@ -61,11 +65,17 @@
       </div>
     </div>
 
-    <div id="controls-template" class="controls">
-      <a class="ui-button download img control" download=your-giffed-face.gif>download gif</a>
-      <a class="ui-button upload img control to-imgur" href=http://imgur.com target=_blank>imgur</a>
-      <a class="ui-button remove img control to-danger">x</a>
-    </div>
+  <div id="controls-template" class="controls">
+    <a class="ui-button download img control" download=your-giffed-face.gif>download gif</a>
+    <a class="ui-button upload img control to-imgur" href=http://imgur.com target=_blank>imgur</a>
+    <a class="ui-button remove img control to-danger">x</a>
+  </div>
+  <div class="generated-gif on-imgur" id="imgur-history-entry-template">
+    <div class="controls"><a class="ui-button remove-from-imgur control remove to-danger" href="http://i.imgur.com/">x</a></div>
+    <a href="http://imgur.com/"><img class="generated-image" alt="" /></a>
+  </div>
+
+
   <script src=js/vendor/gif.js></script>
   <script src=js/app.js?v=2></script>
   <script>
